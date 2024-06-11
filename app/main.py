@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+from app.controllers import router as controllers
 
 # Instantatiate FastAPI instance
 app = FastAPI()
+
+
 
 
 # Connect to database on startup and disconnect on shutdown
@@ -14,4 +17,5 @@ app = FastAPI()
 # async def shutdown():
 #     await database.disconnect()
 
-app.include_router(aiAgent, prefix='/api/v1/aiAgent', tags=['aiAgent'])
+# Define a route
+app.include_router(controllers, prefix="/api/v1", tags=["controllers"])
