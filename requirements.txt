@@ -50,7 +50,7 @@ orjson==3.10.4
 packaging==23.2
 PyAutoGUI==0.9.53
 pycodestyle==2.8.0
-pydantic==2.7.3
+pydantic==2.7.4
 pydantic_core==2.18.4
 PyGetWindow==0.0.9
 Pygments==2.18.0
