@@ -64,6 +64,10 @@ def ask_agent(question:Question):
     {
         "input":"What is the temperature in June 1st, 2024",
         "query":"SELECT temperature FROM [dbo].[tbl_data] WHERE enqueuedTime_Stamp = '2024-06-01';"
+    },
+    {
+        "input":"Get all the rooms belongs to GlobalDWS",
+        "query":"SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id WHERE C.title = 'GlobalDWS';"
     }
 ]
  
