@@ -1,21 +1,11 @@
 from fastapi import FastAPI
+import uvicorn
 from app.controllers import router as controllers
 
 # Instantatiate FastAPI instance
 app = FastAPI()
 
+# Main
+if __name__ == "__main__":
+    uvicorn.run("app.api:app", host="0.0.0.0", port=8000, reload=True)
 
-
-
-# Connect to database on startup and disconnect on shutdown
-
-# @app.on_event("startup")
-# async def startup():
-#     await database.connect()
-
-# @app.on_event("shutdown")
-# async def shutdown():
-#     await database.disconnect()
-
-# Define a route
-app.include_router(controllers, prefix="/api/v1", tags=["controllers"])
