@@ -125,7 +125,7 @@ def ask_agent(question:Question):
         print(prompt_val.to_string())
          
         # Instantiate LLM
-        llm = ChatOpenAI(openai_api_key="sk-proj-kf9yknjQHXCyqASw4jfMT3BlbkFJd3zhvmKFUC414OEaHyZM", model="gpt-3.5-turbo-16k-0613", temperature=0)
+        llm = ChatOpenAI(openai_api_key=openai_api_key, model="gpt-3.5-turbo-16k-0613", temperature=0)
         
         # Instantiate SQL agent
         agent_executor = create_sql_agent(
