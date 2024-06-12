@@ -13,6 +13,9 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_openai import OpenAIEmbeddings
 
+# Import retriever toolkits
+from langchain.agents.agent_toolkits import create_retriever_tool
+
 # Import prompts
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -22,8 +25,14 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 
+# System os and dotenv
 import os
 from dotenv import load_dotenv
+
+# Import abstract syntax grammar
+import ast
+import re
+
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -31,25 +40,53 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 router = APIRouter()
 
 
+# Flattening and filtering truthy values:
+def query_as_list(db,query):
+    res = db.run(query)
+    res = [el for sub in ast.literal_eval(res) for el in sub if el]
+    res = [re.sub(r"\b\d+\b", "", string).strip() for string in res]
+    return list(set(res))
+
+# Format table names to string
+
+
 @router.post("/askAgent")
 def ask_agent(question:Question):
     if question.text != "":
         # Call DB service
         connection_prop = {
-            # "database_user": os.getenv("DB_USER"),
-            # "database_password": os.getenv("DB_PASS"),
-            # "database_server": os.getenv("DB_SERVER"),
-            # "database_db": os.getenv("DB_DATABASE")
-
-            "database_user":"khanhnguyentrq",
-            "database_password": "Khanh92!",
-            "database_server": "azureapi.database.windows.net",
-            "database_db":"azureaiassistant"
+            "database_user": os.getenv("DB_USER"),
+            "database_password": os.getenv("DB_PASS"),
+            "database_server": os.getenv("DB_SERVER"),
+            "database_db": os.getenv("DB_DATABASE")
         }
 
 
-        db = SQLDatabase.from_uri(f"mssql+pymssql://khanhnguyentrq:Khanh92!@azureapi.database.windows.net/azureaiassistant")
+        db = SQLDatabase.from_uri(f"mssql+pymssql://{connection_prop['database_user']}:{connection_prop['database_password']}@{connection_prop['database_server']}/{connection_prop['database_db']}")
+
+        # Get table names
+        table_names = db.get_usable_table_names()
         
+        # Training the model with examples
+        rooms = query_as_list(db,"SELECT room FROM tbl_room")
+        floors = query_as_list(db,"SELECT floor FROM tbl_floor")
+        buildings = query_as_list(db,"SELECT name FROM tbl_building")
+        clients = query_as_list(db,"SELECT title FROM tbl_client")
+
+
+        # Create custom retriever tool
+        vector_db = FAISS.from_texts(rooms + floors + buildings + clients, OpenAIEmbeddings())
+        retriever = vector_db.as_retriever(search_kwargs={"k": 5})
+        description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is \
+        valid proper nouns. Use the noun most similar to the search."""
+
+        retriever_tool = create_retriever_tool(
+            retriever=retriever,
+            description=description,
+            name="search_proper_noun"
+        )
+
+
         # Few-shot prompts
         # Example_Selector
         examples = [
@@ -73,8 +110,6 @@ def ask_agent(question:Question):
  
                    
         embedding_function = OpenAIEmbeddings()
-        
-        
         example_selector = SemanticSimilarityExampleSelector.from_examples(
             examples,
             embedding_function,
@@ -84,26 +119,28 @@ def ask_agent(question:Question):
         )
         
         system_prefix = """You are an agent designed to interact with a SQL database.
-        Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-        Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-        You can order the results by a relevant column to return the most interesting examples in the database.
-        Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-        You have access to tools for interacting with the database.
-        Only use the given tools. Only use the information returned by the tools to construct your final answer.
-        You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+You can order the results by a relevant column to return the most interesting examples in the database.
+Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+You have access to tools for interacting with the database.
+Only use the given tools. Only use the information returned by the tools to construct your final answer.
+You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
 
-        DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-        If the question does not seem related to the database, just return "I don't know" as the answer.
+If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! 
 
-        Here are some examples of user inputs and their corresponding SQL queries:"""
+You have access to the following tables: {table_names}
+
+If the question does not seem related to the database, just return "I don't know" as the answer."""
         
         few_shot_prompt = FewShotPromptTemplate(
         example_selector=example_selector,
         example_prompt=PromptTemplate.from_template(
             "User input: {input}\nSQL query: {query}"
         ),
-        input_variables=["input", "dialect", "top_k"],
+        input_variables=["input", "dialect", "top_k","table_names"],
         prefix=system_prefix,
         suffix="",
         )
@@ -122,6 +159,7 @@ def ask_agent(question:Question):
             "input": question.text,
             "dialect": "SQL",
             "top_k": 5,
+            "table_names": table_names,
             "agent_scratchpad": []  # 
         }
     )
@@ -135,8 +173,9 @@ def ask_agent(question:Question):
         agent_executor = create_sql_agent(
             llm = llm,
             db=db,
+            extra_tools=[retriever_tool],
             prompt=full_prompt,
-            verbose=True, # keeo output as it is or minimal
+            verbose=True, # keep output as it is or minimal
             agent_type="openai-tools"
         )
         
