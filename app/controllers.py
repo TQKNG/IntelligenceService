@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.models import Question, Answer
 from app.services.db_service import DBService
+from typing import Dict, Any
 
 # Import packages for agent creation
 from langchain_community.utilities import SQLDatabase
@@ -33,13 +34,13 @@ from dotenv import load_dotenv
 import ast
 import re
 
-
+# Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 router = APIRouter()
 
-
+### Helper functions ###
 # Flattening and filtering truthy values:
 def query_as_list(db,query):
     res = db.run(query)
@@ -47,13 +48,18 @@ def query_as_list(db,query):
     res = [re.sub(r"\b\d+\b", "", string).strip() for string in res]
     return list(set(res))
 
-# Format table names to string
 
 
-@router.post("/askAgent")
-def ask_agent(question:Question):
-    if question.text != "":
-        # Call DB service
+### Routes ###
+@router.post("/askagent")
+def ask_agent(payload: Dict[Any, Any]):
+
+    # Get question from payload
+    question = payload['question']
+    
+    if question != "":
+        ### DB service ###
+        # Create DB connection properties
         connection_prop = {
             "database_user": os.getenv("DB_USER"),
             "database_password": os.getenv("DB_PASS"),
@@ -61,25 +67,33 @@ def ask_agent(question:Question):
             "database_db": os.getenv("DB_DATABASE")
         }
 
-
+        # Create DB connection
         db = SQLDatabase.from_uri(f"mssql+pymssql://{connection_prop['database_user']}:{connection_prop['database_password']}@{connection_prop['database_server']}/{connection_prop['database_db']}")
 
         # Get table names
         table_names = db.get_usable_table_names()
         
-        # Training the model with examples
+        ### Turn data from each table to list of keywords ###
         rooms = query_as_list(db,"SELECT room FROM tbl_room")
         floors = query_as_list(db,"SELECT floor FROM tbl_floor")
         buildings = query_as_list(db,"SELECT name FROM tbl_building")
         clients = query_as_list(db,"SELECT title FROM tbl_client")
+        projects = query_as_list(db,"SELECT project FROM tbl_project")
+        devices = query_as_list(db,"SELECT device FROM tbl_devices")
+        deployments = query_as_list(db,"SELECT deployment FROM tbl_deployments")
 
 
-        # Create custom retriever tool
-        vector_db = FAISS.from_texts(rooms + floors + buildings + clients, OpenAIEmbeddings())
+
+        ### Create custom retriever tool ###
+        # Embedding and vector database creation
+        vector_db = FAISS.from_texts(rooms + floors + buildings + clients + projects + devices + deployments, OpenAIEmbeddings())
+
+        # Get top 5 matches keywords from input against vector database 
         retriever = vector_db.as_retriever(search_kwargs={"k": 5})
         description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is \
         valid proper nouns. Use the noun most similar to the search."""
 
+        # Create retriever tool to search for proper nouns
         retriever_tool = create_retriever_tool(
             retriever=retriever,
             description=description,
@@ -87,8 +101,8 @@ def ask_agent(question:Question):
         )
 
 
-        # Few-shot prompts
-        # Example_Selector
+        # Generate Few-shot prompts
+        # Create Example_Selector
         examples = [
     {
         "input": "Find the highest temperature for globaldws office.",
@@ -108,8 +122,10 @@ def ask_agent(question:Question):
     }
 ]
  
-                   
+        # Instantiate OpenAIEmbeddings 
         embedding_function = OpenAIEmbeddings()
+
+        # Using SemanticSimilarityExampleSelector to match the input question with the examples
         example_selector = SemanticSimilarityExampleSelector.from_examples(
             examples,
             embedding_function,
@@ -117,24 +133,26 @@ def ask_agent(question:Question):
             k=5,
             input_keys=["input"],
         )
-        
+
+        # Create System Prefix/ instructions        
         system_prefix = """You are an agent designed to interact with a SQL database.
-Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-You can order the results by a relevant column to return the most interesting examples in the database.
-Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-You have access to tools for interacting with the database.
-Only use the given tools. Only use the information returned by the tools to construct your final answer.
-You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+        Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+        Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+        You can order the results by a relevant column to return the most interesting examples in the database.
+        Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+        You have access to tools for interacting with the database.
+        Only use the given tools. Only use the information returned by the tools to construct your final answer.
+        You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
 
-DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+        DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! 
+        If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! 
 
-You have access to the following tables: {table_names}
+        You have access to the following tables: {table_names}
 
-If the question does not seem related to the database, just return "I don't know" as the answer."""
+        If the question does not seem related to the database, just return "I don't know" as the answer."""
         
+        # Create Few-shot prompt``
         few_shot_prompt = FewShotPromptTemplate(
         example_selector=example_selector,
         example_prompt=PromptTemplate.from_template(
@@ -144,7 +162,8 @@ If the question does not seem related to the database, just return "I don't know
         prefix=system_prefix,
         suffix="",
         )
-        
+
+        # Create Full prompt
         full_prompt = ChatPromptTemplate.from_messages(
             [
                   SystemMessagePromptTemplate(prompt=few_shot_prompt),
@@ -154,9 +173,10 @@ If the question does not seem related to the database, just return "I don't know
             
         )
         
+        # Invoke the prompt
         prompt_val = full_prompt.invoke(
         {
-            "input": question.text,
+            "input": question,
             "dialect": "SQL",
             "top_k": 5,
             "table_names": table_names,
@@ -169,7 +189,7 @@ If the question does not seem related to the database, just return "I don't know
         # Instantiate LLM
         llm = ChatOpenAI(openai_api_key=openai_api_key, model="gpt-3.5-turbo-16k-0613", temperature=0)
         
-        # Instantiate SQL agent
+        # Instantiate SQL agent_executor
         agent_executor = create_sql_agent(
             llm = llm,
             db=db,
@@ -180,7 +200,7 @@ If the question does not seem related to the database, just return "I don't know
         )
         
         # NL response
-        result=agent_executor.invoke({"input":question.text})
+        result=agent_executor.invoke({"input":question})
         
             
         return {"message":"Success", "data":result}
