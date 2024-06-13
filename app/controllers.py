@@ -9,15 +9,23 @@ from langchain_community.agent_toolkits import create_sql_agent
 from langchain_openai import ChatOpenAI
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 
-# Import  packages for few-shot learning
+# Import packages example selectors and semantic similarity, vector stores and embeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.example_selectors import SemanticSimilarityExampleSelector
 from langchain_openai import OpenAIEmbeddings
 
+# Import Streamming services
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from fastapi.responses import StreamingResponse
+import asyncio
+from typing import AsyncIterable
+from langchain.callbacks import AsyncIteratorCallbackHandler
+
+
 # Import retriever toolkits
 from langchain.agents.agent_toolkits import create_retriever_tool
 
-# Import prompts
+# Import prompts and templates
 from langchain_core.prompts import (
     ChatPromptTemplate,
     FewShotPromptTemplate,
@@ -47,6 +55,31 @@ def query_as_list(db,query):
     res = [el for sub in ast.literal_eval(res) for el in sub if el]
     res = [re.sub(r"\b\d+\b", "", string).strip() for string in res]
     return list(set(res))
+
+# Send streamming message
+async def send_message(message: str)->AsyncIterable[str]:
+    callback = AsyncIteratorCallbackHandler()
+
+    model = ChatOpenAI(
+        streaming=True,
+        verbose=True,
+        callbacks=[callback]
+    )
+
+    task = asyncio.create_task(
+        model.agenerate(messages =message)
+    )
+
+    try:
+        async for token in callback.aiter():
+            yield token
+    except Exception as e:
+        print(f"Caught exception:{e}")
+    finally:
+        callback.done.set()
+
+    await task
+
 
 
 
@@ -78,15 +111,15 @@ def ask_agent(payload: Dict[Any, Any]):
         floors = query_as_list(db,"SELECT floor FROM tbl_floor")
         buildings = query_as_list(db,"SELECT name FROM tbl_building")
         clients = query_as_list(db,"SELECT title FROM tbl_client")
-        projects = query_as_list(db,"SELECT project FROM tbl_project")
-        devices = query_as_list(db,"SELECT device FROM tbl_devices")
-        deployments = query_as_list(db,"SELECT deployment FROM tbl_deployments")
+        # projects = query_as_list(db,"SELECT project FROM tbl_project")
+        # devices = query_as_list(db,"SELECT device FROM tbl_devices")
+        # deployments = query_as_list(db,"SELECT deployment FROM tbl_deployments")
 
 
 
         ### Create custom retriever tool ###
         # Embedding and vector database creation
-        vector_db = FAISS.from_texts(rooms + floors + buildings + clients + projects + devices + deployments, OpenAIEmbeddings())
+        vector_db = FAISS.from_texts(rooms + floors + buildings + clients , OpenAIEmbeddings())
 
         # Get top 5 matches keywords from input against vector database 
         retriever = vector_db.as_retriever(search_kwargs={"k": 5})
@@ -201,6 +234,16 @@ def ask_agent(payload: Dict[Any, Any]):
         
         # NL response
         result=agent_executor.invoke({"input":question})
+
+        print("result",result)
+
+        # print('test result',result["output"])
+
+        # # Send streamming message
+        # generator = send_message(result["output"])
+
+        # print('test generator',generator)
+        # return StreamingResponse(generator, media_type="text/event-stream")
         
             
         return {"message":"Success", "data":result}

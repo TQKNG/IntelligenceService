@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
 
-
 # Instantatiate FastAPI instance
 app = FastAPI()
 
