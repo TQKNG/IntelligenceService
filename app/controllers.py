@@ -237,13 +237,5 @@ def ask_agent(payload: Dict[Any, Any]):
 
         print("result",result)
 
-        # print('test result',result["output"])
-
-        # # Send streamming message
-        # generator = send_message(result["output"])
-
-        # print('test generator',generator)
-        # return StreamingResponse(generator, media_type="text/event-stream")
-        
             
         return {"message":"Success", "data":result}
