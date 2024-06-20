@@ -24,15 +24,19 @@ from langchain_core.prompts import (
 
 class CreateSqlAgentService:
     def __init__(self):
+        # Initialize the service, no attributes to set initially.
         return None
     
     def config_llm(self, api_key):
+        # Configure the language model (LLM) with the provided API key and specific model settings.
         self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo-16k-0613", temperature=0)
     
     def config_db(self, connection_string):
+        # Configure the database connection using the provided connection string.
         self.db = SQLDatabase.from_uri(connection_string)
 
     def config_system_prefix(self):
+        # Set the system prefix used by the LLM to generate SQL queries.
         self.system_prefix = """You are an agent designed to interact with a SQL database.
         Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
         Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
@@ -51,15 +55,19 @@ class CreateSqlAgentService:
         If the question does not seem related to the database, just return "I don't know" as the answer."""
 
     def get_table_names(self):
+        # Retrieve the names of all usable tables in the configured database.
         return self.db.get_usable_table_names()
     
     def create_custom_retriever_tool(self, text):
+        # Create a custom retriever tool to look up proper nouns using FAISS and OpenAI embeddings.
         self.vector_store = FAISS.from_texts(text, OpenAIEmbeddings())
 
+        # Configure the retriever to return the top 5 most similar results.
         self.retriever = self.vector_store.as_retriever(
            search_kwargs={"k": 5} 
         )
 
+        # Define the retriever tool's purpose and name.
         description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is \
         valid proper nouns. Use the noun most similar to the search."""
 
@@ -70,38 +78,55 @@ class CreateSqlAgentService:
         )
 
     def create_example_selector(self):
+        # Create an example selector using semantic similarity for few-shot learning.
         embedding_function = OpenAIEmbeddings()
         examples = [
-    {
-        "input": "Find the highest temperature for globaldws office.",
-        "query": "SELECT MAX(temperature) AS 'Highest_Temperature' FROM [dbo].[tbl_data] DA "
-                  "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id "
-                  "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                  "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                  "WHERE C.title LIKE '%GlobalDWS%';"
-    },
-    {
-        "input":"Retrieve the client and building that has data in June 2024",
-        "query":"SELECT DISTINCT C.title AS 'Client Name', DISTINCT B.name AS 'Building Name' FROM [dbo].[tbl_data] DA "
-                "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id"
-                "INNER JOIN dbo.tbl_room R ON F.id = R.floors_id "
-                "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                "WHERE DA.enqueuedTime_Stamp >= '2024-06-01' AND DA.enqueuedTime_Stamp < '2024-07-01';"
-    },
-    {
-        "input":"Find the rooms in GlobalDWS office that have the temperature above 21 degrees celcius in the first week of February.",
-        "query":"SELECT R.room AS 'Room Name', AVG(D.temperature) AS 'Average Temperature' FROM dbo.tbl_room R INNER JOIN dbo.tbl_floor F ON R.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id INNER JOIN dbo.tbl_data D ON R.id = D.roomID WHERE C.title LIKE '%GlobalDWS%' AND D.enqueuedTime_Stamp >= '2024-02-01' AND D.enqueuedTime_Stamp < '2024-02-08' GROUP BY R.room HAVING AVG(D.temperature) > 21"
-    },
-    {
-        "input":"What is the temperature in June 1st, 2024",
-        "query":"SELECT temperature FROM [dbo].[tbl_data] WHERE enqueuedTime_Stamp = '2024-06-01';"
-    },
-    {
-        "input":"Get all the rooms belongs to GlobalDWS",
-        "query":"SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id WHERE C.title LIKE '%GlobalDWS%';"
-    }
-]
+            # Example 1
+            {
+                "input": "Find the highest temperature for globaldws office.",
+                "query": "SELECT MAX(temperature) AS 'Highest_Temperature' FROM [dbo].[tbl_data] DA "
+                          "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id "
+                          "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
+                          "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
+                          "WHERE C.title LIKE '%GlobalDWS%';"
+            },
+            # Example 2
+            {
+                "input": "Retrieve the client and building that has data in June 2024",
+                "query": "SELECT DISTINCT C.title AS 'Client Name', DISTINCT B.name AS 'Building Name' FROM [dbo].[tbl_data] DA "
+                          "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id"
+                          "INNER JOIN dbo.tbl_room R ON F.id = R.floors_id "
+                          "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
+                          "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
+                          "WHERE DA.enqueuedTime_Stamp >= '2024-06-01' AND DA.enqueuedTime_Stamp < '2024-07-01';"
+            },
+            # Example 3
+            {
+                "input": "Find the rooms in GlobalDWS office that have the temperature above 21 degrees celcius in the first week of February.",
+                "query": "SELECT R.room AS 'Room Name', AVG(D.temperature) AS 'Average Temperature' FROM dbo.tbl_room R "
+                         "INNER JOIN dbo.tbl_floor F ON R.floors_id = F.id "
+                         "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
+                         "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
+                         "INNER JOIN dbo.tbl_data D ON R.id = D.roomID "
+                         "WHERE C.title LIKE '%GlobalDWS%' AND D.enqueuedTime_Stamp >= '2024-02-01' AND D.enqueuedTime_Stamp < '2024-02-08' "
+                         "GROUP BY R.room HAVING AVG(D.temperature) > 21"
+            },
+            # Example 4
+            {
+                "input": "What is the temperature in June 1st, 2024",
+                "query": "SELECT temperature FROM [dbo].[tbl_data] WHERE enqueuedTime_Stamp = '2024-06-01';"
+            },
+            # Example 5
+            {
+                "input": "Get all the rooms belongs to GlobalDWS",
+                "query": "SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' "
+                         "FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id "
+                         "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
+                         "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
+                         "WHERE C.title LIKE '%GlobalDWS%';"
+            }
+        ]
+        # Use the examples to create a semantic similarity example selector.
         self.example_selector = SemanticSimilarityExampleSelector.from_examples(
             examples,
             embedding_function,
@@ -111,35 +136,38 @@ class CreateSqlAgentService:
         )
     
     def create_few_shot_prompt(self):
+        # Create a few-shot learning prompt template using the example selector.
         self.few_shot_prompt = FewShotPromptTemplate(
-            example_selector = self.example_selector,
-            example_prompt = PromptTemplate.from_template(
+            example_selector=self.example_selector,
+            example_prompt=PromptTemplate.from_template(
                 "User input: {input}\nSQL query: {query}"
             ),
-            input_variables =["input", "dialect", "top_k","table_names"],
+            input_variables=["input", "dialect", "top_k", "table_names"],
             prefix=self.system_prefix,
             suffix="If the question does not seem related to the database, just return 'I don't know. How can I assist you with question about your database' as the answer."
-            )
+        )
         
     def create_full_prompt(self, question):
+        # Create the full prompt template by combining the few-shot prompt with system and user messages.
         table_names = self.get_table_names()
         self.fullprompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate(
-                prompt = self.few_shot_prompt
-            ),("human","{input}"),
+                prompt=self.few_shot_prompt
+            ), ("human", "{input}"),
             MessagesPlaceholder("agent_scratchpad")
-        ]
-        )
+        ])
+        # Invoke the prompt with the required input variables.
         self.fullprompt.invoke(
         {
             "input": question,
             "dialect": "SQL",
             "top_k": 5,
-            "table_names":table_names,
-            "agent_scratchpad": []  # 
+            "table_names": table_names,
+            "agent_scratchpad": []  # Placeholder for the agent's scratchpad messages.
         })
 
     def create_agent(self):
+        # Create the SQL agent using the configured LLM, database, prompt, and additional tools.
         self.agent = create_sql_agent(
             llm=self.llm,
             db=self.db,
@@ -150,4 +178,5 @@ class CreateSqlAgentService:
         )
     
     def execute(self, question):
-        return self.agent({"input":question})
+        # Execute the agent with the given question and return the result.
+        return self.agent({"input": question})
