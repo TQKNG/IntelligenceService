@@ -1,33 +1,12 @@
 from fastapi import APIRouter
-from app.services.create_agent_service import CreateSqlAgentService
+from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from typing import Dict, Any
 
-# Import packages for agent creation
-from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits import create_sql_agent
-from langchain_openai import ChatOpenAI
-
-
-# Import packages example selectors and semantic similarity, vector stores and embeddings
-from langchain_community.vectorstores import FAISS
-from langchain_core.example_selectors import SemanticSimilarityExampleSelector
-from langchain_openai import OpenAIEmbeddings
-
-# Import retriever toolkits
-from langchain.agents.agent_toolkits import create_retriever_tool
-
-# Import prompts and templates
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    FewShotPromptTemplate,
-    MessagesPlaceholder,
-    PromptTemplate,
-    SystemMessagePromptTemplate,
-)
 
 # System os and dotenv
 import os
 from dotenv import load_dotenv
+import pandas as pd
 
 # Import abstract syntax grammar
 import ast
@@ -79,4 +58,22 @@ def ask_sql_agent(payload: Dict[Any,Any]):
         return {"message":"Success", "data":result}
 
 
+@router.post("/askdataanalysisagent")
+def ask_data_analysis_agent(payload: Dict[Any, Any]):
+    question = payload['question']
+    if question != "":
+        data_analysis_agent = CreateDataAnalysisAgentService()
+        data_analysis_agent.create_db_engine(f"mssql+pymssql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_SERVER")}/{os.getenv("DB_DATABASE")}")
+
+        df = pd.read_sql("Select temperature, enqueuedTime_Stamp from tbl_data WHERE enqueuedTime_Stamp > '2023-06-01' AND enqueuedTime_Stamp <'2023-06-30'", data_analysis_agent.engine)
+
+
+        data_analysis_agent.config_llm(openai_api_key)
+        data_analysis_agent.create_agent(df)
+
+        result = data_analysis_agent.execute(question)
+
+        print("Test result", result)
+
+        return {"message":"Success", "data":result['output']}
 

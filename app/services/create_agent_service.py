@@ -21,6 +21,12 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
 )
 
+# SQL Alchemy Lib
+from sqlalchemy import create_engine
+from langchain_experimental.agents import create_pandas_dataframe_agent
+import pandas as pd
+
+
 
 class CreateSqlAgentService:
     def __init__(self):
@@ -180,3 +186,33 @@ class CreateSqlAgentService:
     def execute(self, question):
         # Execute the agent with the given question and return the result.
         return self.agent({"input": question})
+
+
+class CreateDataAnalysisAgentService(CreateSqlAgentService):
+    def __init__(self):
+        return None
+    
+    def create_db_engine(self, connection_string):
+        self.engine = create_engine(connection_string)
+    
+    def config_system_prefix(self):
+        self.system_prefix="""You are a data analyst agent designed to interact with a SQL database for historical data. You will be using the historical data to make predictions and analysis.
+    """
+        
+    def config_llm(self, api_key):
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo-16k-0613", temperature=0)
+
+    def create_agent(self,df):
+        self.agent = create_pandas_dataframe_agent(
+            llm=self.llm,
+            df=df,
+            verbose=True,
+            allow_dangerous_code=True,
+        )
+
+    def execute(self, question):
+        return self.agent.invoke(question)
+         
+
+    
+   
