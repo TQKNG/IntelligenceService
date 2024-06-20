@@ -143,7 +143,20 @@ def ask_agent(payload: Dict[Any, Any]):
                   "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id "
                   "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
                   "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                  "WHERE C.title = 'GlobalDWS';"
+                  "WHERE C.title LIKE '%GlobalDWS%';"
+    },
+    {
+        "input":"Retrieve the client and building that has data in June 2024",
+        "query":"SELECT DISTINCT C.title AS 'Client Name', DISTINCT B.name AS 'Building Name' FROM [dbo].[tbl_data] DA "
+                "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id"
+                "INNER JOIN dbo.tbl_room R ON F.id = R.floors_id "
+                "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
+                "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
+                "WHERE DA.enqueuedTime_Stamp >= '2024-06-01' AND DA.enqueuedTime_Stamp < '2024-07-01';"
+    },
+    {
+        "input":"Find the rooms in GlobalDWS office that have the temperature above 21 degrees celcius in the first week of February.",
+        "query":"SELECT R.room AS 'Room Name', AVG(D.temperature) AS 'Average Temperature' FROM dbo.tbl_room R INNER JOIN dbo.tbl_floor F ON R.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id INNER JOIN dbo.tbl_data D ON R.id = D.roomID WHERE C.title LIKE '%GlobalDWS%' AND D.enqueuedTime_Stamp >= '2024-02-01' AND D.enqueuedTime_Stamp < '2024-02-08' GROUP BY R.room HAVING AVG(D.temperature) > 21"
     },
     {
         "input":"What is the temperature in June 1st, 2024",
@@ -151,7 +164,7 @@ def ask_agent(payload: Dict[Any, Any]):
     },
     {
         "input":"Get all the rooms belongs to GlobalDWS",
-        "query":"SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id WHERE C.title = 'GlobalDWS';"
+        "query":"SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id INNER JOIN dbo.tbl_client C ON B.client_id = C.id WHERE C.title LIKE '%GlobalDWS%';"
     }
 ]
  
@@ -237,5 +250,15 @@ def ask_agent(payload: Dict[Any, Any]):
 
         print("result",result)
 
+<<<<<<< Updated upstream
+=======
+
+        # # Send streamming message
+        # generator = send_message(result["output"])
+
+        # print('test generator',generator)
+        # return StreamingResponse(generator, media_type="text/event-stream")
+        
+>>>>>>> Stashed changes
             
         return {"message":"Success", "data":result}
