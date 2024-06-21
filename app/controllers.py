@@ -66,6 +66,8 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
     if question != "":
         data_analysis_agent = CreateDataAnalysisAgentService()
         data_analysis_agent.create_db_engine(f"mssql+pymssql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_SERVER")}/{os.getenv("DB_DATABASE")}")
+        data_analysis_agent.config_system_prefix()
+        data_analysis_agent.config_llm(openai_api_key)
 
 
         # Test data set: Temperature data in June 2023        
@@ -103,28 +105,32 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         y_pred_df.index = test.index
         y_pred_out = y_pred_df['Predictions']
 
-        # Plot the data
-        plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
-        plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
+        data_analysis_agent.create_agent(y_pred_df)
+        result = data_analysis_agent.execute(question)
+       
 
-        plt.plot(test["enqueuedTime_Stamp"],y_pred_out, color='green', label='Predictions')
+        # Plot the data
+        # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
+        # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
+
+        # plt.plot(test["enqueuedTime_Stamp"],y_pred_out, color='green', label='Predictions')
    
-        plt.legend()
+        # plt.legend()
 
         # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
         # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
 
-        plt.show()
+        # plt.show()
         # plt.show(block=False)
         # plt.pause(0.1)
         # plt.close()
-        return {"message":"Success"}
+        # return {"message":"Success", "data":y_pred_out.to_list()}
         # data_analysis_agent.config_llm(openai_api_key)
         # data_analysis_agent.create_agent(df)
 
         # result = data_analysis_agent.execute(question)
 
-        # print("Test result", result)
+        print("Test result", result)
 
-        # return {"message":"Success", "data":result['output']}
+        return {"message":"Success", "data":result['output']}
 
