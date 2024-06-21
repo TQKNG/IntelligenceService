@@ -196,7 +196,7 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
         self.engine = create_engine(connection_string)
     
     def config_system_prefix(self):
-        self.system_prefix="""You are a data analyst agent designed to interact with a SQL database for historical data. You will be using the historical data to make predictions and analysis.
+        self.system_prefix="""You are a data analyst agent designed to interact with historical data. You will be using the historical data to make further analysis.
     """
         
     def config_llm(self, api_key):
