@@ -7,6 +7,8 @@ from typing import Dict, Any
 import os
 from dotenv import load_dotenv
 import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 # Import abstract syntax grammar
 import ast
@@ -65,15 +67,64 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         data_analysis_agent = CreateDataAnalysisAgentService()
         data_analysis_agent.create_db_engine(f"mssql+pymssql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_SERVER")}/{os.getenv("DB_DATABASE")}")
 
-        df = pd.read_sql("Select temperature, enqueuedTime_Stamp from tbl_data WHERE enqueuedTime_Stamp > '2023-06-01' AND enqueuedTime_Stamp <'2023-06-30'", data_analysis_agent.engine)
 
+        # Test data set: Temperature data in June 2023        
+        df = pd.read_sql("SELECT enqueuedTime_Stamp, temperature FROM tbl_data DA INNER JOIN tbl_room R ON DA.roomID = R.id INNER JOIN tbl_floor F ON R.floors_id = F.id WHERE F.id = 1 AND enqueuedTime_Stamp > '2023-06-01' AND enqueuedTime_Stamp <'2023-06-30'ORDER BY enqueuedTime_Stamp ASC", data_analysis_agent.engine)
 
-        data_analysis_agent.config_llm(openai_api_key)
-        data_analysis_agent.create_agent(df)
+        # Fill missing values
+        # df_filled= df.fillna(method="ffill")
+        # print(df_filled.head())
 
-        result = data_analysis_agent.execute(question)
+        # Interpolate missing values
+        df_interpolated = df.interpolate()
+        # print(df_interpolated.head())
 
-        print("Test result", result)
+        # Plot the data
+        df_interpolated['enqueuedTime_Stamp'] = pd.to_datetime(df_interpolated['enqueuedTime_Stamp'])
+        
+        # df_interpolated.plot(x='enqueuedTime_Stamp', y='temperature', kind='line')
+        
+        train = df_interpolated[df_interpolated['enqueuedTime_Stamp'] < pd.to_datetime('2023-06-15')]
+        test = df_interpolated[df_interpolated['enqueuedTime_Stamp'] >= pd.to_datetime('2023-06-15')]
 
-        return {"message":"Success", "data":result['output']}
+        # Input
+        y = train['temperature']
+
+        # Define ARMA model with SARIMAX class
+        ARMAmodel = SARIMAX(y,order=(1,0,1))
+
+        # Fit the model
+        ARMAmodel = ARMAmodel.fit()
+
+        # Generate predictions
+        y_pred = ARMAmodel.get_forecast(len(test.index))
+        y_pred_df = y_pred.conf_int(alpha=0.05)
+        y_pred_df['Predictions'] = ARMAmodel.predict(start=y_pred_df.index[0], end=y_pred_df.index[-1])
+        y_pred_df.index = test.index
+        y_pred_out = y_pred_df['Predictions']
+
+        # Plot the data
+        plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
+        plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
+
+        plt.plot(test["enqueuedTime_Stamp"],y_pred_out, color='green', label='Predictions')
+   
+        plt.legend()
+
+        # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
+        # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
+
+        plt.show()
+        # plt.show(block=False)
+        # plt.pause(0.1)
+        # plt.close()
+        return {"message":"Success"}
+        # data_analysis_agent.config_llm(openai_api_key)
+        # data_analysis_agent.create_agent(df)
+
+        # result = data_analysis_agent.execute(question)
+
+        # print("Test result", result)
+
+        # return {"message":"Success", "data":result['output']}
 
