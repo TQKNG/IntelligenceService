@@ -211,7 +211,8 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
             verbose=True,
             agent_type=AgentType.OPENAI_FUNCTIONS,
             allow_dangerous_code=True,
-            prefix=self.system_prefix
+            prefix=self.system_prefix,
+            number_of_head_rows=5000
         )
 
     def execute(self, question):
