@@ -39,7 +39,7 @@ def ask_sql_agent(payload: Dict[Any,Any]):
     if question != "":
         sql_agent = CreateSqlAgentService()
         sql_agent.config_llm(openai_api_key)
-        sql_agent.config_db(f"mssql+pymssql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_SERVER")}/{os.getenv("DB_DATABASE")}")
+        sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
         sql_agent.config_system_prefix()
 
         ### Turn data from each table to list of keywords ###
@@ -67,7 +67,8 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
     question = payload['question']
     if question != "":
         data_analysis_agent = CreateDataAnalysisAgentService()
-        data_analysis_agent.create_db_engine(f"mssql+pymssql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_SERVER")}/{os.getenv("DB_DATABASE")}")
+        data_analysis_agent.create_db_engine(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
+
         data_analysis_agent.config_system_prefix()
         data_analysis_agent.config_llm(openai_api_key)
 
