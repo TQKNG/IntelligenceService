@@ -31,6 +31,7 @@ def query_as_list(db,query):
 
 
 ### Routes ###
+# SQL Agent Route
 @router.post("/asksqlagent")
 def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
@@ -60,6 +61,7 @@ def ask_sql_agent(payload: Dict[Any,Any]):
         return {"message":"Success", "data":result}
 
 
+# Data Analysis Agent Route
 @router.post("/askdataanalysisagent")
 def ask_data_analysis_agent(payload: Dict[Any, Any]):
     question = payload['question']
@@ -92,7 +94,7 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         # Input
         y = train['temperature']
 
-        # Define ARMA model with SARIMAX class
+        # Define ARMA prediction model with SARIMAX class
         ARMAmodel = SARIMAX(y,order=(1,0,1))
 
         # Fit the model
@@ -105,32 +107,20 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         y_pred_df.index = test.index
         y_pred_out = y_pred_df['Predictions']
 
-        data_analysis_agent.create_agent(y_pred_df)
-        result = data_analysis_agent.execute(question)
-       
 
         # Plot the data
         # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
         # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
-
         # plt.plot(test["enqueuedTime_Stamp"],y_pred_out, color='green', label='Predictions')
-   
         # plt.legend()
-
         # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
         # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
-
         # plt.show()
-        # plt.show(block=False)
-        # plt.pause(0.1)
-        # plt.close()
-        # return {"message":"Success", "data":y_pred_out.to_list()}
-        # data_analysis_agent.config_llm(openai_api_key)
-        # data_analysis_agent.create_agent(df)
 
-        # result = data_analysis_agent.execute(question)
-
-        print("Test result", result)
+        data_analysis_agent.create_agent(df_interpolated)
+        result = data_analysis_agent.execute(question)
+   
 
         return {"message":"Success", "data":result['output']}
+
 

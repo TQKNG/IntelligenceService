@@ -26,6 +26,8 @@ from sqlalchemy import create_engine
 from langchain_experimental.agents import create_pandas_dataframe_agent
 import pandas as pd
 
+# Import Agent Type from langchain
+from langchain.agents.agent_types import AgentType
 
 
 class CreateSqlAgentService:
@@ -200,14 +202,16 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
     """
         
     def config_llm(self, api_key):
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo-16k-0613", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
 
     def create_agent(self,df):
         self.agent = create_pandas_dataframe_agent(
             llm=self.llm,
             df=df,
             verbose=True,
+            agent_type=AgentType.OPENAI_FUNCTIONS,
             allow_dangerous_code=True,
+            prefix=self.system_prefix
         )
 
     def execute(self, question):
