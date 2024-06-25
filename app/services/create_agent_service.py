@@ -24,7 +24,6 @@ from langchain_core.prompts import (
 # SQL Alchemy Lib
 from sqlalchemy import create_engine
 from langchain_experimental.agents import create_pandas_dataframe_agent
-import pandas as pd
 
 # Import Agent Type from langchain
 from langchain.agents.agent_types import AgentType
