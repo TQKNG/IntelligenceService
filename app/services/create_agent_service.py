@@ -197,7 +197,7 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
         self.engine = create_engine(connection_string)
     
     def config_system_prefix(self):
-        self.system_prefix="""You are a data analyst agent designed to interact with historical data. You will be using the historical data to make further analysis.
+        self.system_prefix="""You are a data analyst agent designed to interact with historical data. You will be using the historical data to make further analysis and prediction.
     """
         
     def config_llm(self, api_key):
@@ -211,6 +211,7 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
             agent_type=AgentType.OPENAI_FUNCTIONS,
             allow_dangerous_code=True,
             prefix=self.system_prefix,
+            number_of_head_rows=300
         )
 
     def execute(self, question):

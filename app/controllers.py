@@ -102,10 +102,11 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         ARMAmodel = ARMAmodel.fit()
 
         # Generate predictions
-        y_pred = ARMAmodel.get_forecast(len(test.index))
+        forecast_dates = pd.date_range(start=train['enqueuedTime_Stamp'].max(), periods=15, freq='D')
+        y_pred = ARMAmodel.get_forecast(steps=15)
         y_pred_df = y_pred.conf_int(alpha=0.05)
         y_pred_df['Predictions'] = ARMAmodel.predict(start=y_pred_df.index[0], end=y_pred_df.index[-1])
-        y_pred_df.index = test.index
+        y_pred_df.index = forecast_dates
         y_pred_out = y_pred_df['Predictions']
 
 
@@ -118,10 +119,10 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
         # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
         # plt.show()
 
-        data_analysis_agent.create_agent(df_interpolated)
+        data_analysis_agent.create_agent(y_pred_df)
         result = data_analysis_agent.execute(question)
-   
-
         return {"message":"Success", "data":result['output']}
+
+        # return{"message":"Success", "data":df.tail(15).to_dict()}
 
 
