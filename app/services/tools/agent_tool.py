@@ -13,7 +13,7 @@ def query_as_list(db,query):
     res = [re.sub(r"\b\d+\b", "", string).strip() for string in res]
     return list(set(res))
 
-# Pandas tool
+# Generate df from sql query
 def generate_dataframe(sql, db):
     df = pd.read_sql(sql, db)
     return df

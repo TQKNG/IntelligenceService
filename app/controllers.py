@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi.responses import FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from typing import Dict, Any
 
@@ -111,18 +112,27 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 
 
         # Plot the data
+        plt.figure(figsize=(10, 6))
         # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
-        # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
+        plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
         # plt.plot(test["enqueuedTime_Stamp"],y_pred_out, color='green', label='Predictions')
-        # plt.legend()
+        plt.legend()
+        output_dir = 'C:/temp/data'
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, 'temperature_plot.png')
+        plt.savefig(output_path)
+        plt.close()
         # plt.plot(train['enqueuedTime_Stamp'], train['temperature'], label='Train', color='blue')
         # plt.plot(test['enqueuedTime_Stamp'], test['temperature'], label='Test', color='red')
         # plt.show()
 
         data_analysis_agent.create_agent(y_pred_df)
         result = data_analysis_agent.execute(question)
-        return {"message":"Success", "data":result['output']}
+
+        return {"message":"Success", "data":result['output'], "plot_url":'http://127.0.0.1:8000/api/v1/plot'}
 
         # return{"message":"Success", "data":df.tail(15).to_dict()}
 
-
+@router.get("/plot")
+def serve_plot():
+    return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
