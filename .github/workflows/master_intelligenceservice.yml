@@ -9,6 +9,11 @@ on:
       - master
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+  actions: write
+
 jobs:
   build:
     runs-on: 'ubuntu-latest'
