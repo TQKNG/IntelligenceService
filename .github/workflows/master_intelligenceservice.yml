@@ -35,7 +35,8 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: index.docker.io/${{ secrets.AzureAppService_ContainerUsername_0477fc48937a46629367fc3df25860fc }}/kcode19/shared-service:${{ github.sha }}
+        # tags: index.docker.io/${{ secrets.AzureAppService_ContainerUsername_0477fc48937a46629367fc3df25860fc }}/kcode19/shared-service:${{ github.sha }}
+        tags: kcode19/shared-service:latest
         file: ./Dockerfile
 
   deploy:
