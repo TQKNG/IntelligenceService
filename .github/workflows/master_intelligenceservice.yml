@@ -54,4 +54,5 @@ jobs:
         app-name: 'intelligenceservice'
         slot-name: 'production'
         publish-profile: ${{ secrets.AzureAppService_PublishProfile_8c58ae88114a4648b1c606536c73aa35 }}
-        images: 'index.docker.io/${{ secrets.AzureAppService_ContainerUsername_0477fc48937a46629367fc3df25860fc }}/kcode19/shared-service:${{ github.sha }}'
+        # images: 'index.docker.io/${{ secrets.AzureAppService_ContainerUsername_0477fc48937a46629367fc3df25860fc }}/kcode19/shared-service:${{ github.sha }}'
+        images: 'kcode19/shared-service:latest'
