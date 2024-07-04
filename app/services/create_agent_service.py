@@ -197,7 +197,7 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
         self.engine = create_engine(connection_string)
     
     def config_system_prefix(self):
-        self.system_prefix="""You are a data analyst agent designed to interact with historical data. You will be using the historical data to make further analysis and prediction.
+        self.system_prefix="""You are a data analyst agent designed to interact with historical data. You will be using the historical data to make further analysis and prediction. DO NOT generate any pylot charts. JUST give me final analysis
     """
         
     def config_llm(self, api_key):
