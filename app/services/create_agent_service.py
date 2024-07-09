@@ -40,7 +40,7 @@ class CreateSqlAgentService:
     
     def config_db(self, connection_string):
         # Configure the database connection using the provided connection string.
-        self.db = SQLDatabase.from_uri(connection_string)
+        self.db = SQLDatabase.from_uri(connection_string,include_tables=['health_data_view'], view_support=True)
 
     def config_system_prefix(self):
         # Set the system prefix used by the LLM to generate SQL queries.
@@ -90,47 +90,28 @@ class CreateSqlAgentService:
         examples = [
             # Example 1
             {
-                "input": "Find the highest temperature for globaldws office.",
-                "query": "SELECT MAX(temperature) AS 'Highest_Temperature' FROM [dbo].[tbl_data] DA "
-                          "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id "
-                          "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                          "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                          "WHERE C.title LIKE '%GlobalDWS%';"
+                "input": "How many rooms in contoso are with average temperature higher than 21 degree",
+                "query": "SELECT COUNT(DISTINCT room_name) AS NumberOfRooms FROM health_data_view WHERE client_name = 'Contoso' AND temperature > 21 GROUP BY room_name HAVING AVG(temperature) > 21"
             },
             # Example 2
             {
-                "input": "Retrieve the client and building that has data in June 2024",
-                "query": "SELECT DISTINCT C.title AS 'Client Name', DISTINCT B.name AS 'Building Name' FROM [dbo].[tbl_data] DA "
-                          "INNER JOIN dbo.tbl_floor F ON DA.roomID = F.id"
-                          "INNER JOIN dbo.tbl_room R ON F.id = R.floors_id "
-                          "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                          "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                          "WHERE DA.enqueuedTime_Stamp >= '2024-06-01' AND DA.enqueuedTime_Stamp < '2024-07-01';"
+                "input": "What is the average, highest, and lowest temperature in globaldws in April 2024",
+                "query": "SELECT AVG(temperature) AS 'Average Temperature', MAX(temperature) AS 'Highest Temperature', MIN(temperature) AS 'Lowest Temperature' FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30'"
             },
             # Example 3
             {
-                "input": "Find the rooms in GlobalDWS office that have the temperature above 21 degrees celcius in the first week of February.",
-                "query": "SELECT R.room AS 'Room Name', AVG(D.temperature) AS 'Average Temperature' FROM dbo.tbl_room R "
-                         "INNER JOIN dbo.tbl_floor F ON R.floors_id = F.id "
-                         "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                         "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                         "INNER JOIN dbo.tbl_data D ON R.id = D.roomID "
-                         "WHERE C.title LIKE '%GlobalDWS%' AND D.enqueuedTime_Stamp >= '2024-02-01' AND D.enqueuedTime_Stamp < '2024-02-08' "
-                         "GROUP BY R.room HAVING AVG(D.temperature) > 21"
+                "input": "Provided that if the average temperature lower than 27 in the last 3 days, an email notification will be triggered. How many time email should be triggered in March 24 for GlobalDWS",
+                "query": "SELECT COUNT(*) AS EmailTriggers FROM (SELECT AVG(temperature) AS AvgTemperature, CAST(updated_time AS DATE) AS DateOnly FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-03-01' AND '2024-03-31' GROUP BY CAST(updated_time AS DATE) HAVING AVG(temperature) < 27) AS SubQuery"
             },
             # Example 4
             {
-                "input": "What is the temperature in June 1st, 2024",
-                "query": "SELECT temperature FROM [dbo].[tbl_data] WHERE enqueuedTime_Stamp = '2024-06-01';"
+                "input": "In 2024, between GlobalDWS and Contoso which had higher co2 level",
+                "query": "SELECT AVG(co2) AS Average_CO2 FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-01-01' AND '2024-12-31'; SELECT AVG(co2) AS Average_CO2 FROM health_data_view WHERE client_name = 'Contoso' AND updated_time BETWEEN '2024-01-01' AND '2024-12-31';"
             },
             # Example 5
             {
-                "input": "Get all the rooms belongs to GlobalDWS",
-                "query": "SELECT DA.room AS 'Room Name', F.floor AS 'Floor Name', B.name AS 'Building Name', C.title AS 'Client Name' "
-                         "FROM [dbo].[tbl_room] DA INNER JOIN dbo.tbl_floor F ON DA.floors_id = F.id "
-                         "INNER JOIN dbo.tbl_building B ON F.buildings_id = B.id "
-                         "INNER JOIN dbo.tbl_client C ON B.client_id = C.id "
-                         "WHERE C.title LIKE '%GlobalDWS%';"
+                "input": "What is the trend of temperature in globaldws in April 2024",
+                "query": "SELECT CAST(updated_time AS DATE) AS Date, AVG(temperature) AS AverageTemperature FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30' GROUP BY CAST(updated_time AS DATE) ORDER BY Date"
             }
         ]
         # Use the examples to create a semantic similarity example selector.
