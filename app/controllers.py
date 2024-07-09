@@ -44,12 +44,9 @@ def ask_sql_agent(payload: Dict[Any,Any]):
         sql_agent.config_system_prefix()
 
         ### Turn data from each table to list of keywords ###
-        rooms = query_as_list(sql_agent.db,"SELECT room FROM tbl_room")
-        floors = query_as_list(sql_agent.db,"SELECT floor FROM tbl_floor")
-        buildings = query_as_list(sql_agent.db,"SELECT name FROM tbl_building")
-        clients = query_as_list(sql_agent.db,"SELECT title FROM tbl_client")
+        clients = query_as_list(sql_agent.db,"SELECT client_name FROM health_data_view")
 
-        sql_agent.create_custom_retriever_tool(rooms + floors + buildings + clients)
+        sql_agent.create_custom_retriever_tool(clients)
 
         sql_agent.create_example_selector()
         sql_agent.create_few_shot_prompt()
