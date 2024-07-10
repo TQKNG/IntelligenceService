@@ -37,7 +37,8 @@ class CreateSqlAgentService:
     def config_llm(self, api_key):
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo-0125", temperature=0, max_retries=5)
+         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
    
     
     def config_db(self, connection_string):
@@ -46,20 +47,21 @@ class CreateSqlAgentService:
 
     def config_system_prefix(self):
         # Set the system prefix used by the LLM to generate SQL queries.
-        self.system_prefix = """You are an agent designed to interact with a SQL database.
-        Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-        Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-        You can order the results by a relevant column to return the most interesting examples in the database.
-        Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-        You have access to tools for interacting with the database.
-        Only use the given tools. Only use the information returned by the tools to construct your final answer.
-        You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-
-        DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-
-        If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! 
-
-        You have access to the following tables: {table_names}
+        self.system_prefix = """You are an agent designed to interact with a SQL database with ability to analyze data to provide insights.
+        Given an input question, 
+        Step 1: You need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! You have access to the following tables: {table_names}
+        Step 2: Before generate any query, refer the example queries to learn how to generate the query.
+        Step 3: You need to create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer. Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+        Step 4: You can order the results by a relevant column to return the most interesting examples in the database.
+        
+        Note: 
+        - Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+        - You can aggregate the results to get the answer.
+        - You can run multiple query when needed to compare data.
+        - You have access to tools for interacting with the database.
+        - Only use the given tools. Only use the information returned by the tools to construct your final answer.
+        - You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+        - DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
         If the question does not seem related to the database, just return "I don't know" as the answer."""
 
@@ -114,6 +116,10 @@ class CreateSqlAgentService:
             {
                 "input": "What is the trend of temperature in globaldws in April 2024",
                 "query": "SELECT CAST(updated_time AS DATE) AS Date, AVG(temperature) AS AverageTemperature FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30' GROUP BY CAST(updated_time AS DATE) ORDER BY Date"
+            },
+            {
+                "input": "Which day of the week the temperature is highest for PSPC",
+                "query": "SELECT DATENAME(dw, updated_time) AS DayOfWeek, MAX(temperature) AS MaxTemperature FROM health_data_view WHERE client_name = 'PSPC - Public Services and Procurement Canada' AND updated_time BETWEEN '2024-05-01' AND '2024-05-31' GROUP BY DATENAME(dw, updated_time) ORDER BY MaxTemperature DESC"
             }
         ]
         # Use the examples to create a semantic similarity example selector.

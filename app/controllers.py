@@ -45,7 +45,9 @@ def ask_sql_agent(payload: Dict[Any,Any]):
 
         ### Turn data from each table to list of keywords ###
         clients = query_as_list(sql_agent.db,"SELECT client_name FROM health_data_view")
+        columns = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'health_data_view';")
 
+        ### Create custom retriever tool ###
         sql_agent.create_custom_retriever_tool(clients)
 
         sql_agent.create_example_selector()
