@@ -38,7 +38,7 @@ class CreateSqlAgentService:
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
          # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
    
     
     def config_db(self, connection_string):
@@ -63,7 +63,8 @@ class CreateSqlAgentService:
         - You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
         - DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-        If the question does not seem related to the database, just return "I don't know" as the answer."""
+        If the question does not seem related to the database, just return "I don't know" as the answer.
+        """
 
     def get_table_names(self):
         # Retrieve the names of all usable tables in the configured database.
@@ -79,8 +80,10 @@ class CreateSqlAgentService:
         )
 
         # Define the retriever tool's purpose and name.
-        description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is \
-        valid proper nouns. Use the noun most similar to the search."""
+        description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is valid proper nouns. Use the noun most similar to the search.
+        Note:
+        - Check all the nouns in the question text
+        """
 
         self.retriever_tool = create_retriever_tool(
             retriever=self.retriever,
