@@ -18,3 +18,8 @@
 - Fix: Optimize SQL server query configuration
 - Fix: Optimize retriever tool
 - Change: Update test case with higher complexity
+
+## [1.0.2] - 2024-07-19
+- Config: New model gpt-4o-mini
+- Optimization: Refactor agent to single skeleton agent
+
