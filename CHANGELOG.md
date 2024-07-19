@@ -23,3 +23,7 @@
 - Config: New model gpt-4o-mini
 - Optimization: Refactor agent to single skeleton agent
 
+## [1.0.3] - 2024-07-19
+- Fix: Configuration on service skeleton
+
+
