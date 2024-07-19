@@ -32,7 +32,11 @@ from langchain.agents.agent_types import AgentType
 class CreateSqlAgentService:
     def __init__(self):
         # Initialize the service, no attributes to set initially.
-        return None
+        self.llm = None
+        self.db = None
+        self.retriever = None
+        self.full_prompt = None
+        self.agent = None
     
     def config_llm(self, api_key):
         # Configure the language model (LLM) with the provided API key and specific model settings.
@@ -191,7 +195,7 @@ class CreateSqlAgentService:
         self.agent = create_sql_agent(
             llm=self.llm,
             db=self.db,
-            prompt=self.fullprompt,
+            prompt=self.full_prompt,
             extra_tools=[self.retriever_tool],
             verbose=True,
             agent_type="openai-tools"

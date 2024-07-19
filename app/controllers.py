@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
+from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from typing import Dict, Any
 
 
@@ -37,28 +38,14 @@ def query_as_list(db,query):
 def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
 
-    if question != "":
-        sql_agent = CreateSqlAgentService()
-        sql_agent.config_llm(openai_api_key)
-        sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
-        sql_agent.config_system_prefix()
+    if question == "":
+        raise HTTPException(status_code=400, detail="Question is empty")
+    
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+    result = sql_agent.execute(question)
+    print("testtt result",result)
 
-        ### Turn data from each table to list of keywords ###
-        clients = query_as_list(sql_agent.db,"SELECT client_name FROM health_data_view")
-        columns = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'health_data_view';")
-
-        ### Create custom retriever tool ###
-        sql_agent.create_custom_retriever_tool(clients)
-
-        sql_agent.create_example_selector()
-        sql_agent.create_few_shot_prompt()
-        sql_agent.create_full_prompt(question)
-        sql_agent.create_agent()
-        result = sql_agent.execute(question)
-
-        print("testtt result",result)
-
-        return {"message":"Success", "data":result}
+    return {"message":"Success", "data":result}
 
 
 # Data Analysis Agent Route
