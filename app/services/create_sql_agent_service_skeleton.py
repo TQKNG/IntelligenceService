@@ -20,7 +20,7 @@ class CreateSqlAgentServiceSkeleton:
                     CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key)
                     CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
                     CreateSqlAgentServiceSkeleton._instance.config_system_prefix()
-                    clients = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT client_name FROM health_data_view")
+                    clients = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
                     CreateSqlAgentServiceSkeleton._instance.get_client_names(clients)
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients)
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()

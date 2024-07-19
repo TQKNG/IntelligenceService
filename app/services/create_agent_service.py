@@ -42,9 +42,9 @@ class CreateSqlAgentService:
     def config_llm(self, api_key):
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
-        #  self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
+         self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=1)
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
+        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
    
     
     def config_db(self, connection_string):
@@ -88,7 +88,7 @@ class CreateSqlAgentService:
 
         You have access to the following tables: {table_names}
 
-        If the question does not seem related to the database, just return "I don't know" as the answer.
+        If the question requires more analysis, you have the ability to analyze the data to provide insights.
         """
 
 
@@ -172,7 +172,7 @@ class CreateSqlAgentService:
             ),
             input_variables=["input", "dialect", "top_k", "table_names"],
             prefix=self.system_prefix,
-            suffix="If the question does not seem related to the database, just return 'I don't know. How can I assist you with question about your database' as the answer."
+            suffix="If the question does not seem related to the database, retry"
         )
         
     def create_full_prompt(self, question):
