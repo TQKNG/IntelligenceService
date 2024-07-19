@@ -42,6 +42,8 @@ def ask_sql_agent(payload: Dict[Any,Any]):
         raise HTTPException(status_code=400, detail="Question is empty")
     
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+    sql_agent.create_full_prompt(question)
+    sql_agent.create_agent()
     result = sql_agent.execute(question)
     print("testtt result",result)
 

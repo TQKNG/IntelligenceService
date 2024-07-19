@@ -37,13 +37,14 @@ class CreateSqlAgentService:
         self.retriever = None
         self.full_prompt = None
         self.agent = None
+        self.clients = None
     
     def config_llm(self, api_key):
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
-         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
-        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
+        #  self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
+        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
    
     
     def config_db(self, connection_string):
@@ -94,6 +95,9 @@ class CreateSqlAgentService:
     def get_table_names(self):
         # Retrieve the names of all usable tables in the configured database.
         return self.db.get_usable_table_names()
+    
+    def get_client_names(self,clients):
+        self.clients=clients
     
     def create_custom_retriever_tool(self, text):
         # Create a custom retriever tool to look up proper nouns using FAISS and OpenAI embeddings.
@@ -174,14 +178,14 @@ class CreateSqlAgentService:
     def create_full_prompt(self, question):
         # Create the full prompt template by combining the few-shot prompt with system and user messages.
         table_names = self.get_table_names()
-        self.fullprompt = ChatPromptTemplate.from_messages([
+        self.full_prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate(
                 prompt=self.few_shot_prompt
             ), ("human", "{input}"),
             MessagesPlaceholder("agent_scratchpad")
         ])
         # Invoke the prompt with the required input variables.
-        self.fullprompt.invoke(
+        self.full_prompt.invoke(
         {
             "input": question,
             "dialect": "SQL",
