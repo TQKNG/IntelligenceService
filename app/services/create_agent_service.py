@@ -42,9 +42,9 @@ class CreateSqlAgentService:
     def config_llm(self, api_key):
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
-         self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=1)
+        #  self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=1)
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
-        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0)
    
     
     def config_db(self, connection_string):
