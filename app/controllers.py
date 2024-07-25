@@ -69,7 +69,15 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
         async def generate_chat_response(message):
             async for chunk in sql_agent.agent.astream(question):
                 content = chunk
-                yield f"data: {content}\n\n"
+                
+                # Separate the steps, actions and final output
+                for msg_type in content:
+                    if msg_type == "output":
+                        yield f"{chunk['output']}\n\n"
+                    elif msg_type == "actions":
+                        yield f"{chunk['actions'][0]}\n\n"
+                    else:
+                        yield f"Further processing\n\n"
 
         return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
         # return {"message":"Success", "data":"done"}
