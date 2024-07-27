@@ -27,7 +27,7 @@ class AI_Assistant:
 
         # Prompt
         self.full_transcript = [{
-            "role":"system", "content":"You are a SQL Server Expert. Be precise and helpful"
+            "role":"system", "content":"You are a SQL Server Expert. Be precise and helpful. Limit your answer in one sentence"
         }]
 
     # Step 2: Real-Time Transcription with AssemblyAI/ Speech-to-Text
@@ -85,6 +85,7 @@ class AI_Assistant:
 
         response = self.openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
+            temperature=0,
             messages=self.full_transcript
         )
 
