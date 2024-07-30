@@ -44,11 +44,8 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
     sql_agent.create_full_prompt(question)
     sql_agent.create_agent()
-    result = sql_agent.execute(question)
-    print("testtt result",result)
 
-
-    ## Stream the response through API
+## Stream the response through API
     async def generate_chat_response(message):
         async for chunk in sql_agent.agent.astream(question):
             content = chunk
@@ -57,10 +54,6 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
             for msg_type in content:
                 if msg_type == "output":
                     yield f"{chunk['output']}\n\n"
-                elif msg_type == "actions":
-                    yield f"{chunk['actions'][0]}\n\n"
-                else:
-                    yield f"Further processing\n\n"
 
     return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
     # return {"message":"Success", "data":"done"}
