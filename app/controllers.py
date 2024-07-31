@@ -1,8 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, requests
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from typing import Dict, Any
-
+import requests
 
 # System os and dotenv
 import os
@@ -18,6 +18,7 @@ import re
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
+elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
 
 router = APIRouter()
 
@@ -157,3 +158,21 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 @router.get("/plot")
 def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
+
+@router.post("/test-voice")
+def test_voice(payload: Dict[Any, Any]):
+     url = "https://api.elevenlabs.io/v1/text-to-speech/nPczCjzI2devNBz1zQrb/stream"
+     headers ={
+            "xi-api-key": elevenlab_api_key}
+
+     response = requests.post(url, headers=headers, json=payload,stream=True)
+
+     if response.status_code == 200:
+         # StreamingResponse expects an iterable of bytes
+         def iter_response():
+            for chunk in response.iter_content(chunk_size=8192):
+                yield chunk
+
+         return StreamingResponse(iter_response(), media_type="audio/mpeg")
+     else:
+         raise HTTPException(status_code=response.status_code, detail="Failed to get a valid response from Eleven Labs API")

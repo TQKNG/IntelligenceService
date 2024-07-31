@@ -1,3 +1,4 @@
+import aiohttp
 import assemblyai as aai
 from elevenlabs import generate, stream
 from openai import OpenAI
@@ -110,9 +111,13 @@ class AI_Assistant:
         )
 
         stream(audio_stream)
+    
+    async def generate_audio_stream(self,text: str):
+       
+        pass
 
-greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
+# greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
 
-ai_assistant = AI_Assistant()
-ai_assistant.generate_audio(greeting)
-ai_assistant.start_transcription()
+# ai_assistant = AI_Assistant()
+# ai_assistant.generate_audio(greeting)
+# ai_assistant.start_transcription()
