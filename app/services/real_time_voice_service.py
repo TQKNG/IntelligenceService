@@ -1,6 +1,6 @@
 import aiohttp
 import assemblyai as aai
-from elevenlabs import generate, stream
+from elevenlabs import  stream
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
@@ -103,7 +103,7 @@ class AI_Assistant:
         self.full_transcript.append({"role":"assistant","content":text})
         print(f"\nAssistant: {text}", end="\r\n")
 
-        audio_stream = generate(
+        audio_stream = self.generate(
             api_key=self.elevenlabs_api_key,
             text=text,
             voice="Brian",
