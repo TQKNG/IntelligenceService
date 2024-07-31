@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse,FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from typing import Dict, Any
@@ -35,7 +35,7 @@ def query_as_list(db,query):
 ### Routes ###
 # SQL Agent Route
 @router.post("/asksqlagent")
-def ask_sql_agent(payload: Dict[Any,Any]):
+async def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
 
     if question == "":
@@ -44,10 +44,19 @@ def ask_sql_agent(payload: Dict[Any,Any]):
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
     sql_agent.create_full_prompt(question)
     sql_agent.create_agent()
-    result = sql_agent.execute(question)
-    print("testtt result",result)
 
-    return {"message":"Success", "data":result}
+## Stream the response through API
+    async def generate_chat_response(message):
+        async for chunk in sql_agent.agent.astream(question):
+            content = chunk
+            
+            # Separate the steps, actions and final output
+            for msg_type in content:
+                if msg_type == "output":
+                    yield f"{chunk['output']}\n\n"
+
+    return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
+    # return {"message":"Success", "data":"done"}
 
 
 # Data Analysis Agent Route

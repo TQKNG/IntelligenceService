@@ -26,4 +26,7 @@
 ## [1.0.3] - 2024-07-19
 - Fix: Configuration on service skeleton
 
+## [1.0.4] - 2024-07-30
+- Fix: Add streaming response functionality
+
 
