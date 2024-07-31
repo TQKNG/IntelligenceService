@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, requests
+from fastapi import APIRouter, HTTPException, requests,UploadFile, File
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from typing import Dict, Any
 import requests
+import httpx
+from io import BytesIO
 
 # System os and dotenv
 import os
@@ -19,6 +21,7 @@ import re
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
+aai_api_key = os.getenv("AAI_API_KEY")
 
 router = APIRouter()
 
@@ -159,20 +162,57 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
 
-@router.post("/test-voice")
-def test_voice(payload: Dict[Any, Any]):
+@router.get("/test-voice")
+def test_voice():
      url = "https://api.elevenlabs.io/v1/text-to-speech/nPczCjzI2devNBz1zQrb/stream"
      headers ={
             "xi-api-key": elevenlab_api_key}
+     
+     test_payload ={
+         "text": "Hello, how are you doing today?"
+     }
 
-     response = requests.post(url, headers=headers, json=payload,stream=True)
+     response = requests.post(url, headers=headers, json=test_payload,stream=True)
 
      if response.status_code == 200:
          # StreamingResponse expects an iterable of bytes
          def iter_response():
             for chunk in response.iter_content(chunk_size=8192):
+                print("test chunk", chunk)
                 yield chunk
 
          return StreamingResponse(iter_response(), media_type="audio/mpeg")
      else:
          raise HTTPException(status_code=response.status_code, detail="Failed to get a valid response from Eleven Labs API")
+     
+@router.post("/test-voice")
+async def speech_to_text(file: UploadFile=File(...)):
+    print("file", file)
+    file_content = await file.read()
+    file_name = file.filename or "audio.mp3"
+
+    async with httpx.AsyncClient() as client:
+        upload_response = await client.post(
+            "https://api.assemblyai.com/v2/upload",
+            headers={"authorization": aai_api_key},
+            files={"file": (file_name, BytesIO(file_content), "audio/mpeg")}
+        )
+
+        if upload_response.status_code != 200:
+            raise HTTPException(status_code=upload_response.status_code, detail="Error uploading audio file")
+        
+        upload_result = upload_response.json()
+        audio_url = upload_result['upload_url']
+
+        # Transcribe the audio
+        transcription_response = await client.post(
+            'https://api.assemblyai.com/v2/transcript',
+            headers={'authorization': aai_api_key, 'content-type': 'application/json'},
+            json = {'audio_url': audio_url}
+        )
+
+        if transcription_response.status_code != 200:
+            raise HTTPException(status_code=transcription_response.status_code, detail="Error requesting transcription")
+
+        transcription_result = transcription_response.json()
+        print("transcription result", transcription_result)

@@ -112,9 +112,6 @@ class AI_Assistant:
 
         stream(audio_stream)
     
-    async def generate_audio_stream(self,text: str):
-       
-        pass
 
 # greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
 
