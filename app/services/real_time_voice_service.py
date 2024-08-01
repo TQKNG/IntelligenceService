@@ -36,7 +36,7 @@ class AI_Assistant:
 
         # Prompt
         self.full_transcript = [{
-            "role":"system", "content":"You are a SQL Server Expert. Be precise and helpful. Limit your answer in one sentence"
+            "role":"system", "content":"You are a Data Analysis. Be precise and helpful. Limit your answer in one sentence"
         }]
 
     # Step 2: Real-Time Transcription with AssemblyAI/ Speech-to-Text
@@ -159,7 +159,7 @@ class AI_Assistant:
         
         
     def generate_openai_response(self, transcript):
-        self.full_transcript.append({"role":"user", "content": transcript.text})
+        self.full_transcript.append({"role":"user", "content": transcript})
 
         response = self.openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -170,6 +170,7 @@ class AI_Assistant:
 
         ai_response = response.choices[0].message.content
         print("AI Response: ", ai_response)
+        return ai_response
 
 # greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
 

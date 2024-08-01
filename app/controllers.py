@@ -182,4 +182,9 @@ def speech_to_text(payload: Dict[Any, Any]):
         audio_file.write(audio_bytes)
 
     text = assistance_agent.speech_to_text(file_path)
-    assistance_agent.generate_openai_response(text)
+    
+    ai_response = assistance_agent.generate_openai_response(text)
+
+    audio_stream = assistance_agent.text_to_speech(ai_response)
+
+    return audio_stream
