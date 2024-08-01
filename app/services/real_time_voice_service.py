@@ -1,9 +1,15 @@
 import aiohttp
 import assemblyai as aai
 from elevenlabs import  stream
+from elevenlabs import VoiceSettings
+from elevenlabs.client import ElevenLabs
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from openai import OpenAI
+from io import BytesIO
 import os
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -23,6 +29,8 @@ class AI_Assistant:
 
         # ElevenLabs API key
         self.elevenlabs_api_key = elevenlab_api_key
+
+        self.synthesizer = None
 
         self.transriber = None
 
@@ -113,14 +121,55 @@ class AI_Assistant:
         stream(audio_stream)
     
 
-    def audio_to_text(self, path):
+    def speech_to_text(self, path):
         self.transcriber = aai.Transcriber()
         transcript = self.transcriber.transcribe(path)
 
         if transcript.status == aai.TranscriptStatus.error:
             print(transcript.error)
         else:
-            print(transcript.text)
+            return transcript.text
+        
+    def text_to_speech(self,text):
+        self.synthesizer = ElevenLabs(api_key=self.elevenlabs_api_key)
+
+        response = self.synthesizer.text_to_speech.convert(
+        voice_id="pNInz6obpgDQGcFmaJgB", # Adam pre-made voice
+        output_format="mp3_22050_32",
+        text=text,
+        model_id="eleven_turbo_v2_5",
+        voice_settings=VoiceSettings(
+            stability=0.0,
+            similarity_boost=1.0,
+            style=0.0,
+            use_speaker_boost=True,
+        ),
+        )
+
+        # If response is a direct byte stream
+        audio_stream = BytesIO()
+        for chunk in response:
+            if chunk:
+                audio_stream.write(chunk)
+        # Reset stream position to the beginning
+        audio_stream.seek(0)
+
+        return StreamingResponse(audio_stream, media_type="audio/mpeg")
+     
+        
+        
+    def generate_openai_response(self, transcript):
+        self.full_transcript.append({"role":"user", "content": transcript.text})
+
+        response = self.openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            temperature=0,
+            messages=self.full_transcript,
+            max_tokens=150
+        )
+
+        ai_response = response.choices[0].message.content
+        print("AI Response: ", ai_response)
 
 # greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
 

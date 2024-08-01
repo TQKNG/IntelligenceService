@@ -163,26 +163,11 @@ def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
 
 @router.get("/test-voice")
-def test_voice():
-     url = "https://api.elevenlabs.io/v1/text-to-speech/nPczCjzI2devNBz1zQrb/stream"
-     headers ={
-            "xi-api-key": elevenlab_api_key}
-     
-     test_payload ={
-         "text": "Hello, how are you doing today?"
-     }
-
-     response = requests.post(url, headers=headers, json=test_payload,stream=True)
-
-     if response.status_code == 200:
-         # StreamingResponse expects an iterable of bytes
-         def iter_response():
-            for chunk in response.iter_content(chunk_size=8192):
-                yield chunk
-
-         return StreamingResponse(iter_response(), media_type="audio/mpeg")
-     else:
-         raise HTTPException(status_code=response.status_code, detail="Failed to get a valid response from Eleven Labs API")
+def text_to_speech():
+    assistance_agent = AI_Assistant()
+    text = "Hello, How can I help you?"
+    audio_stream = assistance_agent.text_to_speech(text)
+    return audio_stream
      
 @router.post("/test-voice")
 def speech_to_text(payload: Dict[Any, Any]):
@@ -196,4 +181,5 @@ def speech_to_text(payload: Dict[Any, Any]):
     with open(file_path, 'wb') as audio_file:
         audio_file.write(audio_bytes)
 
-    assistance_agent.audio_to_text(file_path)
+    text = assistance_agent.speech_to_text(file_path)
+    assistance_agent.generate_openai_response(text)
