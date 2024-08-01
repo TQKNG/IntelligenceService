@@ -113,6 +113,15 @@ class AI_Assistant:
         stream(audio_stream)
     
 
+    def audio_to_text(self, path):
+        self.transcriber = aai.Transcriber()
+        transcript = self.transcriber.transcribe(path)
+
+        if transcript.status == aai.TranscriptStatus.error:
+            print(transcript.error)
+        else:
+            print(transcript.text)
+
 # greeting = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
 
 # ai_assistant = AI_Assistant()

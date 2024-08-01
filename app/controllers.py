@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, requests,UploadFile, File
+from fastapi import APIRouter, HTTPException, requests
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
+from app.services.real_time_voice_service import AI_Assistant
 from typing import Dict, Any
 import requests
-import httpx
-from io import BytesIO
+import base64
 
 # System os and dotenv
 import os
@@ -178,7 +178,6 @@ def test_voice():
          # StreamingResponse expects an iterable of bytes
          def iter_response():
             for chunk in response.iter_content(chunk_size=8192):
-                print("test chunk", chunk)
                 yield chunk
 
          return StreamingResponse(iter_response(), media_type="audio/mpeg")
@@ -186,33 +185,15 @@ def test_voice():
          raise HTTPException(status_code=response.status_code, detail="Failed to get a valid response from Eleven Labs API")
      
 @router.post("/test-voice")
-async def speech_to_text(file: UploadFile=File(...)):
-    print("file", file)
-    file_content = await file.read()
-    file_name = file.filename or "audio.mp3"
+def speech_to_text(payload: Dict[Any, Any]):
+    assistance_agent = AI_Assistant()
 
-    async with httpx.AsyncClient() as client:
-        upload_response = await client.post(
-            "https://api.assemblyai.com/v2/upload",
-            headers={"authorization": aai_api_key},
-            files={"file": (file_name, BytesIO(file_content), "audio/mpeg")}
-        )
+    audio_base64 = payload['audio']
+    audio_bytes = base64.b64decode(audio_base64)
 
-        if upload_response.status_code != 200:
-            raise HTTPException(status_code=upload_response.status_code, detail="Error uploading audio file")
-        
-        upload_result = upload_response.json()
-        audio_url = upload_result['upload_url']
+    file_path = 'uploads/audio.mp3'
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'wb') as audio_file:
+        audio_file.write(audio_bytes)
 
-        # Transcribe the audio
-        transcription_response = await client.post(
-            'https://api.assemblyai.com/v2/transcript',
-            headers={'authorization': aai_api_key, 'content-type': 'application/json'},
-            json = {'audio_url': audio_url}
-        )
-
-        if transcription_response.status_code != 200:
-            raise HTTPException(status_code=transcription_response.status_code, detail="Error requesting transcription")
-
-        transcription_result = transcription_response.json()
-        print("transcription result", transcription_result)
+    assistance_agent.audio_to_text(file_path)
