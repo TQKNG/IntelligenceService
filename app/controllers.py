@@ -158,9 +158,33 @@ def speech_to_text(payload: Dict[Any, Any]):
         audio_file.write(audio_bytes)
 
     text = assistance_agent.speech_to_text(file_path)
+
+    # if not text:
+    #     raise ValueError("Text extraction failed or returned empty. Ensure the audio file is valid and contains recognizable speech.")
     
+    # sql_agent = CreateSqlAgentService()
+    # sql_agent.config_llm(openai_api_key)
+    # sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
+    # sql_agent.config_system_prefix()
+
+    # ### Turn data from each table to list of keywords ###
+    # clients = query_as_list(sql_agent.db,"SELECT client_name FROM health_data_view")
+    # columns = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'health_data_view';")
+
+    # ### Create custom retriever tool ###
+    # sql_agent.create_custom_retriever_tool(clients)
+
+    # sql_agent.create_example_selector()
+    # sql_agent.create_few_shot_prompt()
+    # sql_agent.create_full_prompt(text)
+    # sql_agent.create_agent()
+
+    # result = sql_agent.execute(text)
+
+    # print("Test my result", result)
+
     ai_response = assistance_agent.generate_openai_response(text)
 
     audio_stream = assistance_agent.text_to_speech(ai_response)
-
+    
     return audio_stream
