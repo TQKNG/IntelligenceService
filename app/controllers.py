@@ -185,7 +185,8 @@ def speech_to_text(payload: Dict[Any, Any]):
     sql_agent.create_full_prompt(text)
     sql_agent.create_agent()
     ai_response = sql_agent.execute(text)
-    audio_stream = assistance_agent.text_to_speech(ai_response)
+    print("Response from AI", ai_response)
+    audio_stream = assistance_agent.text_to_speech(ai_response['output'])
     
     return audio_stream
 
