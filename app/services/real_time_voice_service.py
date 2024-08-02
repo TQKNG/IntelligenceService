@@ -30,10 +30,10 @@ class AI_Assistant:
         # ElevenLabs API key
         self.elevenlabs_api_key = elevenlab_api_key
 
-        self.synthesizer = ElevenLabs(api_key=self.elevenlabs_api_key)
+        self.synthesizer = None
 
 
-        self.transcriber = aai.Transcriber()
+        self.transcriber = None
 
         # Prompt
         self.full_transcript = [{
@@ -123,7 +123,7 @@ class AI_Assistant:
     
 
     def speech_to_text(self, path):
-        # self.transcriber = aai.Transcriber()
+        self.transcriber = aai.Transcriber()
         transcript = self.transcriber.transcribe(path)
 
         if transcript.status == aai.TranscriptStatus.error:
@@ -132,7 +132,7 @@ class AI_Assistant:
             return transcript.text
         
     def text_to_speech(self,text):
-        # self.synthesizer = ElevenLabs(api_key=self.elevenlabs_api_key)
+        self.synthesizer = ElevenLabs(api_key=self.elevenlabs_api_key)
 
         response = self.synthesizer.text_to_speech.convert(
         voice_id="pNInz6obpgDQGcFmaJgB", # Adam pre-made voice
