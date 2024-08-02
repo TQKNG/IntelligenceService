@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
 from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
+from app.services.real_time_voice_service import AI_Assistant
 from typing import Dict, Any
-
+import requests
+import base64
 
 # System os and dotenv
 import os
@@ -19,6 +21,8 @@ import re
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
+elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
+aai_api_key = os.getenv("AAI_API_KEY")
 
 router = APIRouter()
 
@@ -133,3 +137,30 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 @router.get("/plot")
 def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
+
+@router.get("/test-voice")
+def text_to_speech():
+    assistance_agent = AI_Assistant()
+    text = "Hello, How can I help you?"
+    audio_stream = assistance_agent.text_to_speech(text)
+    return audio_stream
+     
+@router.post("/test-voice")
+def speech_to_text(payload: Dict[Any, Any]):
+    assistance_agent = AI_Assistant()
+
+    audio_base64 = payload['audio']
+    audio_bytes = base64.b64decode(audio_base64)
+
+    file_path = 'uploads/audio.mp3'
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'wb') as audio_file:
+        audio_file.write(audio_bytes)
+
+    text = assistance_agent.speech_to_text(file_path)
+    
+    ai_response = assistance_agent.generate_openai_response(text)
+
+    audio_stream = assistance_agent.text_to_speech(ai_response)
+
+    return audio_stream
