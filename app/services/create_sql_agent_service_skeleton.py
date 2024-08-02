@@ -1,11 +1,14 @@
 import threading
 import os
 from  app.services.create_agent_service import CreateSqlAgentService
+from app.services.real_time_voice_service import AI_Assistant
 from  app.services.tools.agent_tool import query_as_list
 from dotenv import load_dotenv
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
+elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
+aai_api_key = os.getenv("AAI_API_KEY")
 
 class CreateSqlAgentServiceSkeleton:
     _instance = None
@@ -25,6 +28,7 @@ class CreateSqlAgentServiceSkeleton:
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients)
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
                     CreateSqlAgentServiceSkeleton._instance.create_few_shot_prompt()
+                    # CreateSqlAgentServiceSkeleton._instance = AI_Assistant()
 
                   
         return CreateSqlAgentServiceSkeleton._instance

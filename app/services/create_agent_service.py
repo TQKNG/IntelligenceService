@@ -202,7 +202,7 @@ class CreateSqlAgentService:
             db=self.db,
             prompt=self.full_prompt,
             extra_tools=[self.retriever_tool],
-            verbose=False,
+            verbose=True,
             agent_type="openai-tools"
         )
     

@@ -38,6 +38,15 @@ def query_as_list(db,query):
 
 ### Routes ###
 # SQL Agent Route
+@router.get("/connectagentservice")
+async def connect_agent_service():
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+
+    if sql_agent is None:
+        raise HTTPException(status_code=400, detail="Agent service not connected.")
+    
+    return {"message":"Success", "data":"The agent services has been connected."}
+
 @router.post("/asksqlagent")
 async def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
@@ -53,11 +62,16 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
     async def generate_chat_response(message):
         async for chunk in sql_agent.agent.astream(question):
             content = chunk
-            
+            if 'output' in content:
+                final_output = content['output']
+    
+        if final_output:
+            yield f"{final_output}\n\n"
             # Separate the steps, actions and final output
-            for msg_type in content:
-                if msg_type == "output":
-                    yield f"{chunk['output']}\n\n"
+            # for msg_type in content:
+            #     if msg_type == "output":
+            #         yield f"{chunk}\n\n"
+            
 
     return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
     # return {"message":"Success", "data":"done"}
@@ -140,14 +154,14 @@ def serve_plot():
 
 @router.get("/test-voice")
 def text_to_speech():
-    assistance_agent = AI_Assistant()
+    assistance_agent = CreateSqlAgentServiceSkeleton.get_instance() 
     text = "Hello, How can I help you?"
     audio_stream = assistance_agent.text_to_speech(text)
     return audio_stream
      
 @router.post("/test-voice")
 def speech_to_text(payload: Dict[Any, Any]):
-    assistance_agent = AI_Assistant()
+    assistance_agent = CreateSqlAgentServiceSkeleton.get_instance() 
 
     audio_base64 = payload['audio']
     audio_bytes = base64.b64decode(audio_base64)
