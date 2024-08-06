@@ -37,7 +37,7 @@ def query_as_list(db,query):
 
 ### Routes ###
 # SQL Agent Route
-@router.get("/connectagentservice")
+@router.post("/connectagentservice")
 async def connect_agent_service():
     print("Connecting to agent service")
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
@@ -155,7 +155,8 @@ def serve_plot():
 @router.get("/test-voice")
 def text_to_speech():
     assistance_agent = AI_Assistant()
-    text = "Hello, How can I help you?"
+    text = "Testing"
+    # text = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
     audio_stream = assistance_agent.text_to_speech(text)
     return audio_stream
      
