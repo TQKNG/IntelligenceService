@@ -97,6 +97,7 @@ class CreateSqlAgentService:
         # Retrieve the names of all usable tables in the configured database.
         return self.db.get_usable_table_names()
     
+    
     def get_client_names(self,clients):
         self.clients=clients
     

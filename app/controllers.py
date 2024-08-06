@@ -4,7 +4,6 @@ from app.services.create_agent_service import CreateSqlAgentService, CreateDataA
 from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
 from typing import Dict, Any
-import requests
 import base64
 
 # System os and dotenv
@@ -40,6 +39,7 @@ def query_as_list(db,query):
 # SQL Agent Route
 @router.get("/connectagentservice")
 async def connect_agent_service():
+    print("Connecting to agent service")
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
 
     if sql_agent is None:

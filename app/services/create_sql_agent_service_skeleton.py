@@ -20,12 +20,19 @@ class CreateSqlAgentServiceSkeleton:
             with CreateSqlAgentServiceSkeleton._lock:
                 if CreateSqlAgentServiceSkeleton._instance is None:
                     CreateSqlAgentServiceSkeleton._instance = CreateSqlAgentService()
+
                     CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key)
-                    CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}")
+                    print("Connected to OpenAI")
+
+                    CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
+                    print("Connected to Database")
+
                     CreateSqlAgentServiceSkeleton._instance.config_system_prefix()
                     clients = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
+                    fields = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';")
+
                     CreateSqlAgentServiceSkeleton._instance.get_client_names(clients)
-                    CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients)
+                    CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients + fields)
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
                     CreateSqlAgentServiceSkeleton._instance.create_few_shot_prompt()
                     # CreateSqlAgentServiceSkeleton._instance = AI_Assistant()
