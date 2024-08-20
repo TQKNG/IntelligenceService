@@ -2,6 +2,7 @@
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
 from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
 
 # Import packages example selectors and semantic similarity, vector stores and embeddings
 from langchain_community.vectorstores import FAISS
@@ -28,6 +29,100 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 # Import Agent Type from langchain
 from langchain.agents.agent_types import AgentType
 
+
+class BaseAgent:
+    def __init__(self, id:str, name:str, open_api_key: str,model:str, temperature:float, max_tokens=350 ):
+        self._id = id
+        self._name = name
+        self._status= 'active'
+        self._open_api_key = open_api_key
+        self._model=model
+        self._temperature=temperature
+        self._max_tokens = max_tokens
+        self._system_prefix=None
+        self._llm = None
+        self._streaming=True
+
+    @property
+    def id(self)->str:
+        return self._id
+    
+    @property
+    def name(self)->str:
+        return self._name
+    
+    @property
+    def status(self)->str:
+        return self._status
+    
+    @status.setter
+    def status(self, value:str):
+        self._status = value
+
+    def initialize(self):
+        """Setup method for initializing agent"""
+        pass
+
+    def perform_action(self, action:str, *args):
+        """Perform actions"""
+        pass
+
+    def cleanup(self):
+        """Cleanup method for releasing resources"""
+        pass
+
+
+class GeneralContextAgent(BaseAgent):
+    def __init__(self, id:str, name:str, open_api_key:str,model:str, temperature:float, max_token:int):
+        super().__init__(id, name, open_api_key, model, temperature, max_token)
+        self.full_prompt = None
+
+    def initialize(self):
+        self._llm = ChatOpenAI(openai_api_key=self._open_api_key, model=self._model, temperature=self._temperature, max_tokens = self._max_tokens, streaming = self._streaming)
+
+        self._system_prefix = """You are an agent designed to answer general questions.
+        Provide shortest answer as possible
+        """
+
+
+    def perform_action(self, action:str, *args):
+        match action:
+            case "query":
+                self._messages = [
+                SystemMessage(content=self._system_prefix),
+                HumanMessage(content="Who is Donald Trump"),
+                ]
+                response= self._llm.invoke(self._messages)
+                print("test response", response)
+                
+                pass
+            case _:
+                pass
+
+    def cleanup(self):
+        print("General Context Cleanup")
+
+
+class SQLAgent(BaseAgent):
+    def __init__(self, id:str, name:str, db_connection):
+        super().__init__(id, name)
+        self.db_connection = db_connection
+
+    def initialize(self):
+        print("SQL Agent Initialize")
+
+    def perform_action(self, action:str, *args):
+        print("SQL Agent Action")
+
+    def connect_to_db(self):
+        pass
+
+    def execute_query(self, query:str):
+        pass
+
+    def cleanup(self):
+        print("SQL Agent Cleanup")
+        
 
 class CreateSqlAgentService:
     def __init__(self):
@@ -98,7 +193,7 @@ class CreateSqlAgentService:
         return self.db.get_usable_table_names()
     
     
-    def get_client_names(self,clients):
+    def set_client_names(self,clients):
         self.clients=clients
     
     def create_custom_retriever_tool(self, text):

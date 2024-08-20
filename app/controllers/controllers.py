@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse,FileResponse
-from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
-from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
+from app.services.agent_service import  GeneralContextAgent, CreateSqlAgentService, CreateDataAnalysisAgentService
+from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
 from typing import Dict, Any
 import base64
@@ -36,7 +36,7 @@ def query_as_list(db,query):
 
 
 ### Routes ###
-# SQL Agent Route
+# Connect to All Services
 @router.post("/connectagentservice")
 async def connect_agent_service():
     print("Connecting to agent service")
@@ -46,6 +46,14 @@ async def connect_agent_service():
         raise HTTPException(status_code=400, detail="Agent service not connected.")
     
     return {"message":"Success", "data":"The agent services has been connected."}
+
+
+# Test route
+@router.post("/testroute")
+async def ask_normal_agent(payload: Dict[Any, Any]):
+    agent = GeneralContextAgent("1","Test-Agent",openai_api_key,'gpt-3.5-turbo',0,250 )
+    agent.initialize()
+    agent.perform_action("query")
 
 @router.post("/asksqlagent")
 async def ask_sql_agent(payload: Dict[Any,Any]):

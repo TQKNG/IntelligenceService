@@ -1,4 +1,3 @@
-import aiohttp
 import assemblyai as aai
 from elevenlabs import  stream
 from elevenlabs import VoiceSettings
@@ -9,7 +8,6 @@ from openai import OpenAI
 from io import BytesIO
 import os
 from dotenv import load_dotenv
-import requests
 
 load_dotenv()
 

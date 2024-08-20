@@ -1,8 +1,7 @@
 import threading
 import os
-from  app.services.create_agent_service import CreateSqlAgentService
-from app.services.real_time_voice_service import AI_Assistant
-from  app.services.tools.agent_tool import query_as_list
+from  app.services.agent_service import CreateSqlAgentService
+from  app.tools.agent_tool import query_as_list
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,14 +27,25 @@ class CreateSqlAgentServiceSkeleton:
                     print("Connected to Database")
 
                     CreateSqlAgentServiceSkeleton._instance.config_system_prefix()
+                    print("Initiate AI instruction")
+
+                    # Retrieve unique client names, building names, floor names and device names
                     clients = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
+
+                    # Retrieve fields from the table
                     fields = query_as_list(CreateSqlAgentServiceSkeleton._instance.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';")
 
-                    CreateSqlAgentServiceSkeleton._instance.get_client_names(clients)
+                    # Set clients 
+                    CreateSqlAgentServiceSkeleton._instance.set_client_names(clients)
+
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients + fields)
+                    print("Initiate Retriever Tool")
+
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
+                    print("Initiate Example Selector Tool")
+                    
                     CreateSqlAgentServiceSkeleton._instance.create_few_shot_prompt()
-                    # CreateSqlAgentServiceSkeleton._instance = AI_Assistant()
+                    print("Initiate Few Shots Prompt")
 
                   
         return CreateSqlAgentServiceSkeleton._instance
