@@ -88,9 +88,12 @@ class GeneralContextAgent(BaseAgent):
     def perform_action(self, action:str, *args):
         match action:
             case "query":
+                question = args[0].get('question') if len(args) > 0 else None
+                
+                print("test question", question)
                 self._messages = [
                 SystemMessage(content=self._system_prefix),
-                HumanMessage(content="Who is Donald Trump"),
+                HumanMessage(content=f"{question}"),
                 ]
                 response= self._llm.invoke(self._messages)
                 print("test response", response)
