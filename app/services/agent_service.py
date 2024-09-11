@@ -29,6 +29,53 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 # Import Agent Type from langchain
 from langchain.agents.agent_types import AgentType
 
+# Utils Lib
+from typing_extensions import TypedDict
+from typing import Literal
+import random
+from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
+
+class State(TypedDict):
+    graph_state: str
+
+def node_1(state):
+    print("node_1")
+    return {"graph_state": state['graph_state'] +" I am"}
+
+def node_2(state):
+    print("node_2")
+    return {"graph_state": state['graph_state'] +" happy"}
+
+def node_3(state):
+    print("node_3")
+    return {"graph_state": state['graph_state'] +" sad"}
+
+def decide_mood(state)-> Literal["node_2","node_3"]:
+    user_input = state['graph_state']
+
+    if random.random() < 0.5:
+        return "node_2"
+    
+    return "node_3"
+
+
+agent_type =["Supervisor","General","SQL","Data"]
+system_prompt =(
+    "You are a supervisor tasked with managing a conversation between the"
+    " following workers:  {members}. Given the following user request,"
+    " respond with the worker to act next. Each worker will perform a"
+    " task and respond with their results and status. When finished,"
+    " respond with FINISH."
+)
+options =["FINISH"] + agent_type
+
+def agent_node(state, agent, name):
+    result = agent.invoke(state)
+    return {"messages": [HumanMessage(content=result["messages"][-1].content, name=name)]}
+
+# Supervisor node -> General/SQL/Data node
+
 
 class BaseAgent:
     def __init__(self, id:str, name:str, open_api_key: str,model:str, temperature:float, max_tokens=350 ):
@@ -76,6 +123,8 @@ class GeneralContextAgent(BaseAgent):
     def __init__(self, id:str, name:str, open_api_key:str,model:str, temperature:float, max_token:int):
         super().__init__(id, name, open_api_key, model, temperature, max_token)
         self.full_prompt = None
+        self._builder = None
+        self._graph = None
 
     def initialize(self):
         self._llm = ChatOpenAI(openai_api_key=self._open_api_key, model=self._model, temperature=self._temperature, max_tokens = self._max_tokens, streaming = self._streaming)
@@ -83,8 +132,20 @@ class GeneralContextAgent(BaseAgent):
         self._system_prefix = """You are an agent designed to answer general questions.
         Provide shortest answer as possible
         """
+        
+        # Build graph
+        self._builder = StateGraph(State)
+        self._builder.add_node("node_1", node_1)
+        self._builder.add_node("node_2", node_2)
+        self._builder.add_node("node_3", node_3)
 
+        # Logic
+        self._builder.add_edge(START,node_1)
+        self._builder.add_conditional_edges("node_1", decide_mood)
+        self._builder.add_edge("node_2", END)
+        self._builder.add_edge("node_3", END)
 
+        
     def perform_action(self, action:str, *args):
         match action:
             case "query":
@@ -100,7 +161,12 @@ class GeneralContextAgent(BaseAgent):
                 
                 pass
             case _:
-                pass
+                # Add
+                print(self._builder)
+                self._graph = self._builder.compile()
+
+            # View
+                display(Image(self._graph.get_graph().draw_mermaid_png()))
 
     def cleanup(self):
         print("General Context Cleanup")

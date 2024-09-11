@@ -53,7 +53,7 @@ async def connect_agent_service():
 async def ask_normal_agent(payload: Dict[Any, Any]):
     agent = GeneralContextAgent("1","Test-Agent",openai_api_key,'gpt-3.5-turbo',0,250 )
     agent.initialize()
-    agent.perform_action("query",payload)
+    agent.perform_action("other",payload)
 
 @router.post("/asksqlagent")
 async def ask_sql_agent(payload: Dict[Any,Any]):
