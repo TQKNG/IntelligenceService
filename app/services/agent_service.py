@@ -203,13 +203,13 @@ class CreateSqlAgentService:
         self.agent = None
         self.clients = None
     
-    def config_llm(self, api_key):
+    def config_llm(self, api_key, model):
         # Configure the language model (LLM) with the provided API key and specific model settings.
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
          # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, streaming = True)
 
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4o-mini", temperature=0, streaming = True)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
    
     
     def config_db(self, connection_string):
@@ -378,7 +378,7 @@ class CreateSqlAgentService:
 
 class CreateDataAnalysisAgentService(CreateSqlAgentService):
     def __init__(self):
-        return None
+        self.agent = None
     
     def create_db_engine(self, connection_string):
         self.engine = create_engine(connection_string)
@@ -388,7 +388,7 @@ class CreateDataAnalysisAgentService(CreateSqlAgentService):
     """
         
     def config_llm(self, api_key):
-        self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0)
+        self.llm = ChatOpenAI(openai_api_key=api_key, model="o1-mini", temperature=0.5, streaming=True)
 
     def create_agent(self,df):
         self.agent = create_pandas_dataframe_agent(

@@ -156,6 +156,45 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 
         # return{"message":"Success", "data":df.tail(15).to_dict()}
 
+@router.post("/askdataanalysisagentv2")
+async def ask_data_analysis_agent_v2(payload: Dict[Any,Any]):
+    question = payload['question']
+
+    if question == "":
+        raise HTTPException(status_code=400, detail="Question is empty")
+
+    sql_agent =  CreateSqlAgentService()
+    sql_agent.config_llm(openai_api_key,'gpt-4-turbo')
+    sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
+    sql_agent.config_system_prefix()
+    clients = query_as_list(sql_agent.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
+    fields = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';")
+    sql_agent.set_client_names(clients)
+    sql_agent.create_custom_retriever_tool(clients + fields)
+    sql_agent.create_example_selector()
+    sql_agent.create_few_shot_prompt()
+    sql_agent.create_full_prompt(question)
+    sql_agent.create_agent()
+
+    ## Stream the response through API
+    async def generate_chat_response(message):
+        async for chunk in sql_agent.agent.astream(question):
+            content = chunk
+            if 'output' in content:
+                final_output = content['output']
+    
+        if final_output:
+            yield f"{final_output}\n\n"
+            # Separate the steps, actions and final output
+            # for msg_type in content:
+            #     if msg_type == "output":
+            #         yield f"{chunk}\n\n"
+            
+
+    return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
+    # return {"message":"Success", "data":"done"}
+
+
 @router.get("/plot")
 def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
@@ -163,8 +202,8 @@ def serve_plot():
 @router.get("/test-voice")
 def text_to_speech():
     assistance_agent = AI_Assistant()
-    text = "Testing"
-    # text = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
+    # text = "Testing"
+    text = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
     audio_stream = assistance_agent.text_to_speech(text)
     return audio_stream
      

@@ -20,7 +20,7 @@ class CreateSqlAgentServiceSkeleton:
                 if CreateSqlAgentServiceSkeleton._instance is None:
                     CreateSqlAgentServiceSkeleton._instance = CreateSqlAgentService()
 
-                    CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key)
+                    CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key,'gpt-4o-mini')
                     print("Connected to OpenAI")
 
                     CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
