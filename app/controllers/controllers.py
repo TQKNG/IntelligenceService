@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse,FileResponse
-from app.services.create_agent_service import CreateSqlAgentService, CreateDataAnalysisAgentService
-from app.services.create_sql_agent_service_skeleton import CreateSqlAgentServiceSkeleton
+from app.services.agent_service import  GeneralContextAgent, CreateSqlAgentService, CreateDataAnalysisAgentService
+from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
+from app.services.real_time_voice_service import AI_Assistant
 from typing import Dict, Any
-
+import base64
 
 # System os and dotenv
 import os
@@ -19,6 +20,8 @@ import re
 # Load environment variables
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
+elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
+aai_api_key = os.getenv("AAI_API_KEY")
 
 router = APIRouter()
 
@@ -33,7 +36,25 @@ def query_as_list(db,query):
 
 
 ### Routes ###
-# SQL Agent Route
+# Connect to All Services
+@router.post("/connectagentservice")
+async def connect_agent_service():
+    print("Connecting to agent service")
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+
+    if sql_agent is None:
+        raise HTTPException(status_code=400, detail="Agent service not connected.")
+    
+    return {"message":"Success", "data":"The agent services has been connected."}
+
+
+# Test route
+@router.post("/testroute")
+async def ask_normal_agent(payload: Dict[Any, Any]):
+    agent = GeneralContextAgent("1","Test-Agent",openai_api_key,'gpt-3.5-turbo',0,250 )
+    agent.initialize()
+    agent.perform_action("other",payload)
+
 @router.post("/asksqlagent")
 async def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
@@ -49,11 +70,16 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
     async def generate_chat_response(message):
         async for chunk in sql_agent.agent.astream(question):
             content = chunk
-            
+            if 'output' in content:
+                final_output = content['output']
+    
+        if final_output:
+            yield f"{final_output}\n\n"
             # Separate the steps, actions and final output
-            for msg_type in content:
-                if msg_type == "output":
-                    yield f"{chunk['output']}\n\n"
+            # for msg_type in content:
+            #     if msg_type == "output":
+            #         yield f"{chunk}\n\n"
+            
 
     return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
     # return {"message":"Success", "data":"done"}
@@ -130,6 +156,86 @@ def ask_data_analysis_agent(payload: Dict[Any, Any]):
 
         # return{"message":"Success", "data":df.tail(15).to_dict()}
 
+@router.post("/askdataanalysisagentv2")
+async def ask_data_analysis_agent_v2(payload: Dict[Any,Any]):
+    question = payload['question']
+
+    if question == "":
+        raise HTTPException(status_code=400, detail="Question is empty")
+
+    sql_agent =  CreateSqlAgentService()
+    sql_agent.config_llm(openai_api_key,'gpt-4-turbo')
+    sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
+    sql_agent.config_system_prefix()
+    clients = query_as_list(sql_agent.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
+    fields = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';")
+    sql_agent.set_client_names(clients)
+    sql_agent.create_custom_retriever_tool(clients + fields)
+    sql_agent.create_example_selector()
+    sql_agent.create_few_shot_prompt()
+    sql_agent.create_full_prompt(question)
+    sql_agent.create_agent()
+
+    ## Stream the response through API
+    async def generate_chat_response(message):
+        async for chunk in sql_agent.agent.astream(question):
+            content = chunk
+            if 'output' in content:
+                final_output = content['output']
+    
+        if final_output:
+            yield f"{final_output}\n\n"
+            # Separate the steps, actions and final output
+            # for msg_type in content:
+            #     if msg_type == "output":
+            #         yield f"{chunk}\n\n"
+            
+
+    return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
+    # return {"message":"Success", "data":"done"}
+
+
 @router.get("/plot")
 def serve_plot():
     return FileResponse('C:/temp/data/temperature_plot.png', media_type='image/png')
+
+@router.get("/test-voice")
+def text_to_speech():
+    assistance_agent = AI_Assistant()
+    # text = "Testing"
+    text = "Thank you for using Virbrix Analytic assistant. My name is Virbrix. How can I help you today?"
+    audio_stream = assistance_agent.text_to_speech(text)
+    return audio_stream
+     
+@router.post("/test-voice")
+def speech_to_text(payload: Dict[Any, Any]):
+    assistance_agent = AI_Assistant()
+
+    audio_base64 = payload['audio']
+    audio_bytes = base64.b64decode(audio_base64)
+
+    file_path = 'uploads/audio.mp3'
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'wb') as audio_file:
+        audio_file.write(audio_bytes)
+
+    text = assistance_agent.speech_to_text(file_path)
+
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+    
+
+    # OPEN AI API
+    # ai_response = assistance_agent.generate_openai_response(text)
+     # audio_stream = assistance_agent.text_to_speech(ai_response)
+    # return audio_stream
+
+    # SQL Agent
+    sql_agent.create_full_prompt(text)
+    sql_agent.create_agent()
+    ai_response = sql_agent.execute(text)
+    print("Response from AI", ai_response)
+    audio_stream = assistance_agent.text_to_speech(ai_response['output'])
+    
+    return audio_stream
+
+   

@@ -1,7 +1,6 @@
 # Import abstract syntax grammar
 import ast
 import re
-
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -22,4 +21,5 @@ def generate_dataframe(sql, db):
 def interpolate_data(df):
     df = df.interpolate(method='linear', limit_direction='forward', axis=0)
     return df
+
 
