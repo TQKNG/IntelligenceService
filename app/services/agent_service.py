@@ -77,120 +77,120 @@ from IPython.display import Image, display
 # Supervisor node -> General/SQL/Data node
 
 
-class BaseAgent:
-    def __init__(self, id:str, name:str, open_api_key: str,model:str, temperature:float, max_tokens=350 ):
-        self._id = id
-        self._name = name
-        self._status= 'active'
-        self._open_api_key = open_api_key
-        self._model=model
-        self._temperature=temperature
-        self._max_tokens = max_tokens
-        self._system_prefix=None
-        self._llm = None
-        self._streaming=True
+# class BaseAgent:
+#     def __init__(self, id:str, name:str, open_api_key: str,model:str, temperature:float, max_tokens=350 ):
+#         self._id = id
+#         self._name = name
+#         self._status= 'active'
+#         self._open_api_key = open_api_key
+#         self._model=model
+#         self._temperature=temperature
+#         self._max_tokens = max_tokens
+#         self._system_prefix=None
+#         self._llm = None
+#         self._streaming=True
 
-    @property
-    def id(self)->str:
-        return self._id
+#     @property
+#     def id(self)->str:
+#         return self._id
     
-    @property
-    def name(self)->str:
-        return self._name
+#     @property
+#     def name(self)->str:
+#         return self._name
     
-    @property
-    def status(self)->str:
-        return self._status
+#     @property
+#     def status(self)->str:
+#         return self._status
     
-    @status.setter
-    def status(self, value:str):
-        self._status = value
+#     @status.setter
+#     def status(self, value:str):
+#         self._status = value
 
-    def initialize(self):
-        """Setup method for initializing agent"""
-        pass
+#     def initialize(self):
+#         """Setup method for initializing agent"""
+#         pass
 
-    def perform_action(self, action:str, *args):
-        """Perform actions"""
-        pass
+#     def perform_action(self, action:str, *args):
+#         """Perform actions"""
+#         pass
 
-    def cleanup(self):
-        """Cleanup method for releasing resources"""
-        pass
+#     def cleanup(self):
+#         """Cleanup method for releasing resources"""
+#         pass
 
 
-class GeneralContextAgent(BaseAgent):
-    def __init__(self, id:str, name:str, open_api_key:str,model:str, temperature:float, max_token:int):
-        super().__init__(id, name, open_api_key, model, temperature, max_token)
-        self.full_prompt = None
-        self._builder = None
-        self._graph = None
+# class GeneralContextAgent(BaseAgent):
+#     def __init__(self, id:str, name:str, open_api_key:str,model:str, temperature:float, max_token:int):
+#         super().__init__(id, name, open_api_key, model, temperature, max_token)
+#         self.full_prompt = None
+#         self._builder = None
+#         self._graph = None
 
-    def initialize(self):
-        self._llm = ChatOpenAI(openai_api_key=self._open_api_key, model=self._model, temperature=self._temperature, max_tokens = self._max_tokens, streaming = self._streaming)
+#     def initialize(self):
+#         self._llm = ChatOpenAI(openai_api_key=self._open_api_key, model=self._model, temperature=self._temperature, max_tokens = self._max_tokens, streaming = self._streaming)
 
-        self._system_prefix = """You are an agent designed to answer general questions.
-        Provide shortest answer as possible
-        """
+#         self._system_prefix = """You are an agent designed to answer general questions.
+#         Provide shortest answer as possible
+#         """
         
-        # Build graph
-        self._builder = StateGraph(State)
-        self._builder.add_node("node_1", node_1)
-        self._builder.add_node("node_2", node_2)
-        self._builder.add_node("node_3", node_3)
+#         # Build graph
+#         self._builder = StateGraph(State)
+#         self._builder.add_node("node_1", node_1)
+#         self._builder.add_node("node_2", node_2)
+#         self._builder.add_node("node_3", node_3)
 
-        # Logic
-        self._builder.add_edge(START,node_1)
-        self._builder.add_conditional_edges("node_1", decide_mood)
-        self._builder.add_edge("node_2", END)
-        self._builder.add_edge("node_3", END)
+#         # Logic
+#         self._builder.add_edge(START,node_1)
+#         self._builder.add_conditional_edges("node_1", decide_mood)
+#         self._builder.add_edge("node_2", END)
+#         self._builder.add_edge("node_3", END)
 
         
-    def perform_action(self, action:str, *args):
-        match action:
-            case "query":
-                question = args[0].get('question') if len(args) > 0 else None
+#     def perform_action(self, action:str, *args):
+#         match action:
+#             case "query":
+#                 question = args[0].get('question') if len(args) > 0 else None
                 
-                print("test question", question)
-                self._messages = [
-                SystemMessage(content=self._system_prefix),
-                HumanMessage(content=f"{question}"),
-                ]
-                response= self._llm.invoke(self._messages)
-                print("test response", response)
+#                 print("test question", question)
+#                 self._messages = [
+#                 SystemMessage(content=self._system_prefix),
+#                 HumanMessage(content=f"{question}"),
+#                 ]
+#                 response= self._llm.invoke(self._messages)
+#                 print("test response", response)
                 
-                pass
-            case _:
-                # Add
-                print(self._builder)
-                self._graph = self._builder.compile()
+#                 pass
+#             case _:
+#                 # Add
+#                 print(self._builder)
+#                 self._graph = self._builder.compile()
 
-            # View
-                display(Image(self._graph.get_graph().draw_mermaid_png()))
+#             # View
+#                 display(Image(self._graph.get_graph().draw_mermaid_png()))
 
-    def cleanup(self):
-        print("General Context Cleanup")
+#     def cleanup(self):
+#         print("General Context Cleanup")
 
 
-class SQLAgent(BaseAgent):
-    def __init__(self, id:str, name:str, db_connection):
-        super().__init__(id, name)
-        self.db_connection = db_connection
+# class SQLAgent(BaseAgent):
+#     def __init__(self, id:str, name:str, db_connection):
+#         super().__init__(id, name)
+#         self.db_connection = db_connection
 
-    def initialize(self):
-        print("SQL Agent Initialize")
+#     def initialize(self):
+#         print("SQL Agent Initialize")
 
-    def perform_action(self, action:str, *args):
-        print("SQL Agent Action")
+#     def perform_action(self, action:str, *args):
+#         print("SQL Agent Action")
 
-    def connect_to_db(self):
-        pass
+#     def connect_to_db(self):
+#         pass
 
-    def execute_query(self, query:str):
-        pass
+#     def execute_query(self, query:str):
+#         pass
 
-    def cleanup(self):
-        print("SQL Agent Cleanup")
+#     def cleanup(self):
+#         print("SQL Agent Cleanup")
         
 
 class CreateSqlAgentService:
