@@ -34,45 +34,45 @@ from typing_extensions import TypedDict
 from typing import Literal
 import random
 from IPython.display import Image, display
-from langgraph.graph import StateGraph, START, END
+# from langgraph.graph import StateGraph, START, END
 
-class State(TypedDict):
-    graph_state: str
+# class State(TypedDict):
+#     graph_state: str
 
-def node_1(state):
-    print("node_1")
-    return {"graph_state": state['graph_state'] +" I am"}
+# def node_1(state):
+#     print("node_1")
+#     return {"graph_state": state['graph_state'] +" I am"}
 
-def node_2(state):
-    print("node_2")
-    return {"graph_state": state['graph_state'] +" happy"}
+# def node_2(state):
+#     print("node_2")
+#     return {"graph_state": state['graph_state'] +" happy"}
 
-def node_3(state):
-    print("node_3")
-    return {"graph_state": state['graph_state'] +" sad"}
+# def node_3(state):
+#     print("node_3")
+#     return {"graph_state": state['graph_state'] +" sad"}
 
-def decide_mood(state)-> Literal["node_2","node_3"]:
-    user_input = state['graph_state']
+# def decide_mood(state)-> Literal["node_2","node_3"]:
+#     user_input = state['graph_state']
 
-    if random.random() < 0.5:
-        return "node_2"
+#     if random.random() < 0.5:
+#         return "node_2"
     
-    return "node_3"
+#     return "node_3"
 
 
-agent_type =["Supervisor","General","SQL","Data"]
-system_prompt =(
-    "You are a supervisor tasked with managing a conversation between the"
-    " following workers:  {members}. Given the following user request,"
-    " respond with the worker to act next. Each worker will perform a"
-    " task and respond with their results and status. When finished,"
-    " respond with FINISH."
-)
-options =["FINISH"] + agent_type
+# agent_type =["Supervisor","General","SQL","Data"]
+# system_prompt =(
+#     "You are a supervisor tasked with managing a conversation between the"
+#     " following workers:  {members}. Given the following user request,"
+#     " respond with the worker to act next. Each worker will perform a"
+#     " task and respond with their results and status. When finished,"
+#     " respond with FINISH."
+# )
+# options =["FINISH"] + agent_type
 
-def agent_node(state, agent, name):
-    result = agent.invoke(state)
-    return {"messages": [HumanMessage(content=result["messages"][-1].content, name=name)]}
+# def agent_node(state, agent, name):
+#     result = agent.invoke(state)
+#     return {"messages": [HumanMessage(content=result["messages"][-1].content, name=name)]}
 
 # Supervisor node -> General/SQL/Data node
 
