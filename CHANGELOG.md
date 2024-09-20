@@ -29,4 +29,7 @@
 ## [1.0.4] - 2024-07-30
 - Fix: Add streaming response functionality
 
+## [1.0.5] - 2024-09-20
+- Feature: Voice + performance testing + POC analysis testing 
+
 
