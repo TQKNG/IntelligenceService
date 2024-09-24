@@ -209,7 +209,8 @@ class CreateAzureOpenAIService:
             openai_api_key=azure_openai_key,
             azure_endpoint= endpoint,
             azure_deployment = deployment, api_version= version, temperature=0, max_tokens=300, 
-        timeout=None, max_retries=2)
+            streaming = True
+       )
    
     
     def config_db(self, connection_string):
