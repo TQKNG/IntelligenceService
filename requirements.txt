@@ -45,11 +45,12 @@ jsonpointer==3.0.0
 kiwisolver==1.4.5
 langchain==0.2.5
 langchain-community==0.2.5
-langchain-core==0.2.9
+langchain-core==0.2.39
 langchain-experimental==0.0.61
 langchain-openai==0.1.8
 langchain-text-splitters==0.2.1
-langsmith==0.1.76
+langgraph==0.2.27
+langgraph-checkpoint==1.0.11
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 marshmallow==3.21.3
