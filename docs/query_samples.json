@@ -1,0 +1,26 @@
+ [
+    {
+        "input": "How many rooms in contoso are with average temperature higher than 21 degree",
+        "query": "SELECT COUNT(DISTINCT room_name) AS NumberOfRooms FROM health_data_view WHERE client_name = 'Contoso' AND temperature > 21 GROUP BY room_name HAVING AVG(temperature) > 21"
+    },
+    {
+        "input": "What is the average, highest, and lowest temperature in globaldws in April 2024",
+        "query": "SELECT AVG(temperature) AS 'Average Temperature', MAX(temperature) AS 'Highest Temperature', MIN(temperature) AS 'Lowest Temperature' FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30'"
+    },
+    {
+        "input": "Provided that if the average temperature lower than 27 in the last 3 days, an email notification will be triggered. How many time email should be triggered in March 24 for GlobalDWS",
+        "query": "SELECT COUNT(*) AS EmailTriggers FROM (SELECT AVG(temperature) AS AvgTemperature, CAST(updated_time AS DATE) AS DateOnly FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-03-01' AND '2024-03-31' GROUP BY CAST(updated_time AS DATE) HAVING AVG(temperature) < 27) AS SubQuery"
+    },
+    {
+        "input": "In 2024, between GlobalDWS and Contoso which had higher co2 level",
+        "query": "SELECT AVG(co2) AS Average_CO2 FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-01-01' AND '2024-12-31'; SELECT AVG(co2) AS Average_CO2 FROM health_data_view WHERE client_name = 'Contoso' AND updated_time BETWEEN '2024-01-01' AND '2024-12-31';"
+    },
+    {
+        "input": "What is the trend of temperature in globaldws in April 2024",
+        "query": "SELECT CAST(updated_time AS DATE) AS Date, AVG(temperature) AS AverageTemperature FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30' GROUP BY CAST(updated_time AS DATE) ORDER BY Date"
+    },
+    {
+        "input": "Which day of the week the temperature is highest for PSPC",
+        "query": "SELECT DATENAME(dw, updated_time) AS DayOfWeek, MAX(temperature) AS MaxTemperature FROM health_data_view WHERE client_name = 'PSPC - Public Services and Procurement Canada' AND updated_time BETWEEN '2024-05-01' AND '2024-05-31' GROUP BY DATENAME(dw, updated_time) ORDER BY MaxTemperature DESC"
+    }
+]
