@@ -1,3 +1,6 @@
+import pandas as pd
+import os
+
 # Import packages for agent creation
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import create_sql_agent
@@ -11,6 +14,8 @@ from langchain_openai import OpenAIEmbeddings
 
 # Import retriever toolkits
 from langchain.agents.agent_toolkits import create_retriever_tool
+
+
 
 
 # Import prompts and templates
@@ -29,7 +34,8 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 # Import Agent Type from langchain
 from langchain.agents.agent_types import AgentType
 
-# Utils Lib
+# Import document loader
+from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoader
 
 class CreateAzureOpenAIService:
     def __init__(self):
@@ -208,6 +214,33 @@ class CreateAzureOpenAIService:
             verbose=True,
             agent_type="openai-tools"
         )
+
+    def index_document(self, filepath, endpoint, api_key):
+
+        filepath = './docs'
+        # Load Excel Sheet Using Panda
+        file_path = os.path.join(filepath, "Virbrix-Business-Logic.xlsx")
+        sheet_name = 'Overview'
+
+        # Load Excel Sheet to DF
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+        # Convert to CSV
+        df.to_csv("temp_sheet.csv", index=False)
+
+        # Connect to Azure AI Document Intelligence
+        endpoint = "https://intelligence-document.cognitiveservices.azure.com/" 
+
+        api_key = "37f5c66594fb420b95d73ee3543b2b24"
+
+        loader = AzureAIDocumentIntelligenceLoader(api_endpoint=endpoint, api_key=api_key, file_path="temp_sheet.csv",api_model="prebuilt-layout")
+
+        documents = loader.load()
+
+        print("test my document", documents)
+    
+
+
     
     def execute(self, question):
         # Execute the agent with the given question and return the result.
@@ -392,6 +425,30 @@ class CreateSqlAgentService:
             agent_type="openai-tools"
         )
     
+    def index_document(self, filepath=None, endpoint=None, api_key=None):
+        filepath = './docs'
+        # Load Excel Sheet Using Panda
+        file_path = os.path.join(filepath, "Virbrix-Business-Logic.xlsx")
+        sheet_name = 'Overview'
+
+        # Load Excel Sheet to DF
+        # df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+        # Convert to CSV
+        # df.to_csv("temp_sheet.csv", index=False)
+
+        # Connect to Azure AI Document Intelligence
+        endpoint = "https://intelligence-document.cognitiveservices.azure.com/" 
+
+        api_key = "37f5c66594fb420b95d73ee3543b2b24"
+
+        loader = AzureAIDocumentIntelligenceLoader(api_endpoint=endpoint, api_key=api_key, file_path=file_path,api_model="prebuilt-layout")
+
+        documents = loader.load()
+
+        print("test my document", documents)
+    
+
     def execute(self, question):
         # Execute the agent with the given question and return the result.
         return self.agent({"input": question})
