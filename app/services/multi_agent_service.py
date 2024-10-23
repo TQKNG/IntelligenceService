@@ -9,7 +9,7 @@ class MultiAgentService:
     # Agent Creation and Initialization Logic
     def initialize_agents(self):
         return AgentFactory.create_agent(agent_type='Supervisor', name='Agent 1', config={
-            'llm': {'provider': 'OpenAI', 'model': 'gpt-3.5-turbo-0301'},
+            'llm': {'provider': 'OpenAI', 'model': 'gpt-4o-mini'},
             'temperature': 0.7,
             'max_tokens': 1000
         })
@@ -25,4 +25,4 @@ class MultiAgentService:
     def invoke(self, question):
         supervisor_agent = self.initialize_agents()
 
-        supervisor_agent.perform_task(question)
+        response = supervisor_agent.perform_task(question)
