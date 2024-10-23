@@ -5,4 +5,4 @@ class SupervisorAgent(BaseAgent):
         super().__init__(name, config)
     
     def perform_task(self, input_data):
-        pass
+        print("SupervisorPerforming task")

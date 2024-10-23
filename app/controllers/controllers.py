@@ -3,6 +3,10 @@ from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
+
+from app.services.multi_agent_service import MultiAgentService
+
+
 from typing import Dict, Any
 import base64
 
@@ -276,4 +280,12 @@ def speech_to_text(payload: Dict[Any, Any]):
     
     return audio_stream
 
-   
+@router.post("/analytics_service")
+async def analytics_service(payload: Dict[Any,Any]):
+
+    multiagent_service = MultiAgentService()
+
+    multiagent_service.invoke(payload['question'])
+
+
+    return {"message":"Success", "data":"The analytics service has been connected."}

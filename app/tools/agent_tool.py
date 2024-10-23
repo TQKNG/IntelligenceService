@@ -3,6 +3,14 @@ import ast
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
+from dotenv import load_dotenv
+from langchain_community.tools.tavily_search import TavilySearchResults
+
+load_dotenv()
+
+TAVILY_API_KEY = os.getenv("TAVLY_API_KEY")
+
 
 ### Helper functions ###
 # Flattening and filtering truthy values:
@@ -24,5 +32,7 @@ def interpolate_data(df):
 
 
 # Search tool
+tavily_tool = TavilySearchResults(max_results=5)
+
 
 
