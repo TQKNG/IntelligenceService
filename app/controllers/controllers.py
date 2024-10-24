@@ -25,6 +25,7 @@ aai_api_key = os.getenv("AAI_API_KEY")
 
 azure_openai_key = os.getenv("AZURE_OPEN_API_KEY")
 azure_deployment = os.getenv("AZURE_DEPLOYMENT")
+azure_deployment_gen = os.getenv("AZURE_DEPLOYMENT")
 azure_api_version = os.getenv("AZURE_API_VERSION")
 azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 azure_cognitive_endpoint= os.getenv("AZURE_COGNITIVE_API_ENDPOINT")
@@ -207,18 +208,11 @@ async def ask_data_analysis_agent_v2(payload: Dict[Any,Any]):
     if question == "":
         raise HTTPException(status_code=400, detail="Question is empty")
 
-    sql_agent =  CreateSqlAgentService()
-    sql_agent.config_llm(openai_api_key,'gpt-4-turbo')
-    sql_agent.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
-    sql_agent.config_system_prefix()
-    clients = query_as_list(sql_agent.db,"SELECT DISTINCT client_name, building_name, floor_name, device_name FROM health_data_view")
-    fields = query_as_list(sql_agent.db,"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo';")
-    sql_agent.set_client_names(clients)
-    sql_agent.create_custom_retriever_tool(clients + fields)
-    sql_agent.create_example_selector()
-    sql_agent.create_few_shot_prompt()
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance()
+    sql_agent.config_llm(azure_openai_key,azure_openai_endpoint, azure_deployment_gen, azure_api_version)
     sql_agent.create_full_prompt(question)
     sql_agent.create_agent()
+    
 
     ## Stream the response through API
     async def generate_chat_response(message):

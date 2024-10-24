@@ -226,8 +226,8 @@ class CreateSqlAgentService:
         self.clients = None
         self.document_retriever=None
     
-    def config_llm(self, api_key, model):
-        self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
+    # def config_llm(self, api_key, model):
+    #     self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
 
     def config_llm(self,azure_openai_key,endpoint, deployment,version):
         self.llm = AzureChatOpenAI(
