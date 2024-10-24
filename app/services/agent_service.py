@@ -32,7 +32,6 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain.agents.agent_types import AgentType
 
 
-
 class CreateAzureOpenAIService:
     def __init__(self):
         # Initialize the service, no attributes to set initially.
@@ -227,8 +226,8 @@ class CreateSqlAgentService:
         self.clients = None
         self.document_retriever=None
     
-    # def config_llm(self, api_key, model):
-    #     self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
+    def config_llm(self, api_key, model):
+        self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
 
     def config_llm(self,azure_openai_key,endpoint, deployment,version):
         self.llm = AzureChatOpenAI(
@@ -371,10 +370,6 @@ class CreateSqlAgentService:
             {
                 "input": "Which day of the week the temperature is highest for PSPC",
                 "query": "SELECT DATENAME(dw, updated_time) AS DayOfWeek, MAX(temperature) AS MaxTemperature FROM health_data_view WHERE client_name = 'PSPC - Public Services and Procurement Canada' AND updated_time BETWEEN '2024-05-01' AND '2024-05-31' GROUP BY DATENAME(dw, updated_time) ORDER BY MaxTemperature DESC"
-            },
-            {
-                "input": "what is lowest noise in globaldws in May 2024",
-                "query": "SELECT MIN noise_level) AS LowestNoise FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN                '2024-05-01' AND '2024-05-31'"
             },
         ]
         # Use the examples to create a semantic similarity example selector.

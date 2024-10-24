@@ -107,21 +107,21 @@ async def ask_sql_agent(payload: Dict[Any,Any]):
     sql_agent.create_agent()
 
 ## Stream the response through API
-    # async def generate_chat_response(message):
-    #     async for chunk in sql_agent.agent.astream(question):
-    #         content = chunk
-    #         if 'output' in content:
-    #             final_output = content['output']
+    async def generate_chat_response(message):
+        async for chunk in sql_agent.agent.astream(question):
+            content = chunk
+            if 'output' in content:
+                final_output = content['output']
     
-    #     if final_output:
-    #         yield f"{final_output}\n\n"
-    #         # Separate the steps, actions and final output
-    #         # for msg_type in content:
-    #         #     if msg_type == "output":
-    #         #         yield f"{chunk}\n\n"
+        if final_output:
+            yield f"{final_output}\n\n"
+            # Separate the steps, actions and final output
+            # for msg_type in content:
+            #     if msg_type == "output":
+            #         yield f"{chunk}\n\n"
             
 
-    # return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
+    return StreamingResponse(generate_chat_response(message=question), media_type="text/event-stream")
 
 
     ## No streaming
