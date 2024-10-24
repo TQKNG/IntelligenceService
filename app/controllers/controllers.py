@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
-from app.utils.processing_doc import processing_structured_doc
+from app.utils.processing_doc import save_base64_to_temp_file, process_and_delete_file, processing_structured_doc
 from typing import Dict, Any
 import base64
 
@@ -99,9 +99,13 @@ async def ask_azure_agent(payload: Dict[Any, Any]):
 @router.post("/asksqlagent")
 async def ask_sql_agent(payload: Dict[Any,Any]):
     question = payload['question']
+    base64_file = payload['file']
 
     if question == "":
         raise HTTPException(status_code=400, detail="Question is empty")
+    
+    # if base64_file and base64_file !='':
+    #     save_base64_to_temp_file(base64_string=base64_file, filename='knowledgebase')
     
     sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
     sql_agent.create_full_prompt(question)
