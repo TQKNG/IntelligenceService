@@ -227,13 +227,17 @@ class CreateSqlAgentService:
         self.clients = None
         self.document_retriever=None
     
-    def config_llm(self, api_key, model):
-        # Configure the language model (LLM) with the provided API key and specific model settings.
-        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, max_retries=2)
-         # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-3.5-turbo", temperature=0)
-        # self.llm = ChatOpenAI(openai_api_key=api_key, model="gpt-4-turbo-2024-04-09", temperature=0, streaming = True)
+    # def config_llm(self, api_key, model):
+    #     self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
 
-        self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
+    def config_llm(self,azure_openai_key,endpoint, deployment,version):
+        self.llm = AzureChatOpenAI(
+            openai_api_key=azure_openai_key,
+            azure_endpoint= endpoint,
+            azure_deployment = deployment, api_version= version, temperature=0, max_tokens=300, 
+            streaming = True
+       )
+        
    
     
     def config_db(self, connection_string):
@@ -348,6 +352,7 @@ class CreateSqlAgentService:
                 "input": "What is the average, highest, and lowest temperature in globaldws in April 2024",
                 "query": "SELECT AVG(temperature) AS 'Average Temperature', MAX(temperature) AS 'Highest Temperature', MIN(temperature) AS 'Lowest Temperature' FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN '2024-04-01' AND '2024-04-30'"
             },
+
             # Example 3
             {
                 "input": "Provided that if the average temperature lower than 27 in the last 3 days, an email notification will be triggered. How many time email should be triggered in March 24 for GlobalDWS",
@@ -366,7 +371,11 @@ class CreateSqlAgentService:
             {
                 "input": "Which day of the week the temperature is highest for PSPC",
                 "query": "SELECT DATENAME(dw, updated_time) AS DayOfWeek, MAX(temperature) AS MaxTemperature FROM health_data_view WHERE client_name = 'PSPC - Public Services and Procurement Canada' AND updated_time BETWEEN '2024-05-01' AND '2024-05-31' GROUP BY DATENAME(dw, updated_time) ORDER BY MaxTemperature DESC"
-            }
+            },
+            {
+                "input": "what is lowest noise in globaldws in May 2024",
+                "query": "SELECT MIN noise_level) AS LowestNoise FROM health_data_view WHERE client_name = 'GlobalDWS' AND updated_time BETWEEN                '2024-05-01' AND '2024-05-31'"
+            },
         ]
         # Use the examples to create a semantic similarity example selector.
         self.example_selector = SemanticSimilarityExampleSelector.from_examples(
