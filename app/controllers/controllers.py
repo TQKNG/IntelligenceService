@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
+from app.utils.processing_doc import processing_structured_doc
 from typing import Dict, Any
 import base64
 
@@ -25,7 +26,6 @@ aai_api_key = os.getenv("AAI_API_KEY")
 
 azure_openai_key = os.getenv("AZURE_OPEN_API_KEY")
 azure_deployment = os.getenv("AZURE_DEPLOYMENT")
-azure_deployment_gen = os.getenv("AZURE_DEPLOYMENT")
 azure_api_version = os.getenv("AZURE_API_VERSION")
 azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 azure_cognitive_endpoint= os.getenv("AZURE_COGNITIVE_API_ENDPOINT")
@@ -208,11 +208,11 @@ async def ask_data_analysis_agent_v2(payload: Dict[Any,Any]):
     if question == "":
         raise HTTPException(status_code=400, detail="Question is empty")
 
-    sql_agent = CreateSqlAgentServiceSkeleton.get_instance()
-    sql_agent.config_llm(azure_openai_key,azure_openai_endpoint, azure_deployment_gen, azure_api_version)
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
     sql_agent.create_full_prompt(question)
     sql_agent.create_agent()
-    
+
+    # Add logic to handle analytic and prediction capability
 
     ## Stream the response through API
     async def generate_chat_response(message):
