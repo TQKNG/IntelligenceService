@@ -15,9 +15,6 @@ from langchain_openai import OpenAIEmbeddings
 # Import retriever toolkits
 from langchain.agents.agent_toolkits import create_retriever_tool
 
-
-
-
 # Import prompts and templates
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -34,8 +31,7 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 # Import Agent Type from langchain
 from langchain.agents.agent_types import AgentType
 
-# Import document loader
-from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoader
+
 
 class CreateAzureOpenAIService:
     def __init__(self):
@@ -215,33 +211,6 @@ class CreateAzureOpenAIService:
             agent_type="openai-tools"
         )
 
-    def index_document(self, filepath, endpoint, api_key):
-
-        filepath = './docs'
-        # Load Excel Sheet Using Panda
-        file_path = os.path.join(filepath, "Virbrix-Business-Logic.xlsx")
-        sheet_name = 'Overview'
-
-        # Load Excel Sheet to DF
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
-
-        # Convert to CSV
-        df.to_csv("temp_sheet.csv", index=False)
-
-        # Connect to Azure AI Document Intelligence
-        endpoint = "https://intelligence-document.cognitiveservices.azure.com/" 
-
-        api_key = "37f5c66594fb420b95d73ee3543b2b24"
-
-        loader = AzureAIDocumentIntelligenceLoader(api_endpoint=endpoint, api_key=api_key, file_path="temp_sheet.csv",api_model="prebuilt-layout")
-
-        documents = loader.load()
-
-        print("test my document", documents)
-    
-
-
-    
     def execute(self, question):
         # Execute the agent with the given question and return the result.
         return self.agent({"input": question})
@@ -256,6 +225,7 @@ class CreateSqlAgentService:
         self.full_prompt = None
         self.agent = None
         self.clients = None
+        self.document_retriever=None
     
     def config_llm(self, api_key, model):
         # Configure the language model (LLM) with the provided API key and specific model settings.
@@ -303,7 +273,7 @@ class CreateSqlAgentService:
 
         DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-        If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! 
+        If you need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" and "search_proper_docs" tool! 
 
         You have access to the following tables: {table_names}
 
@@ -339,6 +309,30 @@ class CreateSqlAgentService:
             description=description,
             name="search_proper_nouns",
         )
+
+    def create_document_retriever_tool(self, documents):
+
+        texts = [doc.page_content for doc in documents]
+        # Create a custom retriever tool to look up proper nouns using FAISS and OpenAI embeddings.
+        self.vector_store = FAISS.from_texts(texts, OpenAIEmbeddings())
+
+        # Configure the retriever to return the top 5 most similar results.
+        self.document_retriever = self.vector_store.as_retriever(
+           search_kwargs={"k": 3} 
+        )
+
+        # Define the retriever tool's purpose and name.
+        description = """Use to look up values to filter on. Input is an approximate spelling of the proper noun, output is valid proper nouns. Use the noun most similar to the search.
+        Note:
+        - Check all the nouns in the question text
+        """
+
+        self.docs_retriever_tool = create_retriever_tool(
+            retriever=self.document_retriever,
+            description=description,
+            name="search_proper_docs",
+        )
+
 
     def create_example_selector(self):
         # Create an example selector using semantic similarity for few-shot learning.
@@ -420,33 +414,11 @@ class CreateSqlAgentService:
             llm=self.llm,
             db=self.db,
             prompt=self.full_prompt,
-            extra_tools=[self.retriever_tool],
+            extra_tools=[self.retriever_tool, self.docs_retriever_tool],
             verbose=True,
             agent_type="openai-tools"
         )
     
-    def index_document(self, filepath=None, endpoint=None, api_key=None):
-        filepath = './docs'
-        # Load Excel Sheet Using Panda
-        file_path = os.path.join(filepath, "Virbrix-Business-Logic.xlsx")
-        sheet_name = 'Overview'
-
-        # Load Excel Sheet to DF
-        # df = pd.read_excel(file_path, sheet_name=sheet_name)
-
-        # Convert to CSV
-        # df.to_csv("temp_sheet.csv", index=False)
-
-        # Connect to Azure AI Document Intelligence
-        endpoint = "https://intelligence-document.cognitiveservices.azure.com/" 
-
-        api_key = "37f5c66594fb420b95d73ee3543b2b24"
-
-        loader = AzureAIDocumentIntelligenceLoader(api_endpoint=endpoint, api_key=api_key, file_path=file_path,api_model="prebuilt-layout")
-
-        documents = loader.load()
-
-        print("test my document", documents)
     
 
     def execute(self, question):

@@ -3,6 +3,7 @@ import os
 from  app.services.agent_service import CreateSqlAgentService
 from  app.tools.agent_tool import query_as_list
 from dotenv import load_dotenv
+from app.utils.processing_doc import processing_structured_doc
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -40,6 +41,11 @@ class CreateSqlAgentServiceSkeleton:
 
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients + fields)
                     print("Initiate Retriever Tool")
+                    
+                    docs_to_object = processing_structured_doc()
+                    
+
+                    CreateSqlAgentServiceSkeleton._instance.create_document_retriever_tool(docs_to_object)
 
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
                     print("Initiate Example Selector Tool")
