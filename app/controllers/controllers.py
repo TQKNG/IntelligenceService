@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import FastAPI, UploadFile, Form, File, HTTPException, APIRouter
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
-# from app.utils.processing_doc import save_base64_to_temp_file, process_and_delete_file, processing_structured_doc
+from app.utils.processing_doc import processing_structured_doc,save_file, excel_to_csv
 from typing import Dict, Any
 import base64
 
@@ -97,19 +97,45 @@ async def ask_azure_agent(payload: Dict[Any, Any]):
     # return {"message":"Success", "data":"done"}
 
 @router.post("/asksqlagent")
-async def ask_sql_agent(payload: Dict[Any,Any]):
-    question = payload['question']
-    base64_file = payload['file']
-
-    if question == "":
+async def ask_sql_agent( question: str = Form(...),knowledgeBase: UploadFile = File(None)):
+    
+    if not question:
         raise HTTPException(status_code=400, detail="Question is empty")
     
-    # if base64_file and base64_file !='':
-    #     save_base64_to_temp_file(base64_string=base64_file, filename='knowledgebase')
+    # Knowledge base Text-to-SQL
+    if knowledgeBase:
+        # Location to save file
+        directory = "./uploads"
+        os.makedirs(directory, exist_ok=True)
+        file_path = os.path.join(directory,knowledgeBase.filename)
+
+        # Save file temporary
+        await save_file(knowledgeBase, file_path)
+
+        # Process file
+        docs = await processing_structured_doc(file_path)
+
+        # Instantiate or Get existing Agent instance
+        sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+
+        # RAG doc
+        sql_agent.create_document_retriever_tool(docs)
+
+        # Generate prompt
+        sql_agent.create_full_prompt(question)
+
+        # Execute the query
+        sql_agent.create_agent()
+
+        # Delete the doc
     
-    sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
-    sql_agent.create_full_prompt(question)
-    sql_agent.create_agent()
+    # Normal Text-to-SQL 
+    else:
+        sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
+        sql_agent.create_full_prompt(question)
+        sql_agent.create_agent()
+
+   
 
 ## Stream the response through API
     async def generate_chat_response(message):

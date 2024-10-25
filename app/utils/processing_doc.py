@@ -10,31 +10,34 @@ from langchain_text_splitters import CharacterTextSplitter,RecursiveCharacterTex
 from langchain_community.document_loaders.csv_loader import CSVLoader
 
 
-# Step 1: Pre-process excel data
-def excel_to_csv(file_path=None):
-    # Path to file
-    directory = './uploads'
-    excel_file_path = os.path.join(directory, "WELL-Standard-Summary.xlsx")
-    csv_file_path = os.path.join(directory,"WELL-Standard-Summary.csv")
-    df = pd.read_excel(excel_file_path)
-    df.to_csv(csv_file_path, index = False)
 
+async def save_file(file, file_path):
+    with open(file_path, 'wb') as f:
+        f.write(await file.read())
     
 
 
-# Step 2: Processing structure docs eg: excel
-def processing_structured_doc( filepath=None, endpoint=None, api_key=None):
+# Pre-process excel data
+async def excel_to_csv(file_path):
     # Path to file
-    directory = './uploads'
-    csv_file_path = os.path.join(directory,"WELL-Standard-Summary.csv")
+    df = pd.read_excel(file_path)
+    df.to_csv(file_path, index = False)
+
+    
+
+# Processing structure docs eg: excel
+async def processing_structured_doc(file_path):
 
     # Step 1
-    excel_to_csv()
+    await excel_to_csv(file_path)
 
-    loader = CSVLoader(file_path=csv_file_path, source_column="Source")
+    loader = CSVLoader(file_path=file_path, source_column="Source")
     data = loader.load()
 
     return data
+
+def processing_unstructured_doc(file_path):
+    pass
 
     # # Load Data
     # loader = AzureAIDocumentIntelligenceLoader(
@@ -52,4 +55,3 @@ def processing_structured_doc( filepath=None, endpoint=None, api_key=None):
 
     # print("test my text", texts)
 
-processing_structured_doc()

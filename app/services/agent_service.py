@@ -217,14 +217,15 @@ class CreateAzureOpenAIService:
 
 class CreateSqlAgentService:
     def __init__(self):
-        # Initialize the service, no attributes to set initially.
         self.llm = None
         self.db = None
-        self.retriever = None
         self.full_prompt = None
         self.agent = None
         self.clients = None
+        self.retriever = None
+        self.retriever_tool = None
         self.document_retriever=None
+        self.docs_retriever_tool=None
     
     # def config_llm(self, api_key, model):
     #     self.llm = ChatOpenAI(openai_api_key=api_key, model=model, temperature=0, streaming = True)
@@ -237,34 +238,10 @@ class CreateSqlAgentService:
             streaming = True
        )
         
-   
-    
     def config_db(self, connection_string):
-        # Configure the database connection using the provided connection string.
         self.db = SQLDatabase.from_uri(connection_string,include_tables=['health_data_view'], view_support=True)
 
     def config_system_prefix(self):
-        # Set the system prefix used by the LLM to generate SQL queries.
-        # self.system_prefix = """You are an agent designed to interact with a SQL database with ability to analyze data to provide insights.
-        # Given an input question, 
-        # Step 1: You need to filter on a proper noun, you must ALWAYS first look up the filter value using the "search_proper_nouns" tool! You have access to the following tables: {table_names}
-        # Step 2: Before generate any query, refer the example queries to learn how to generate the query.
-        # Step 3: You need to create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer. Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-        # Step 4: You can order the results by a relevant column to return the most interesting examples in the database.
-        
-        # Note: 
-        # - Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-        # - You can aggregate the results to get the answer.
-        # - You can run multiple query when needed to compare data.
-        # - You have access to tools for interacting with the database.
-        # - Only use the given tools. Only use the information returned by the tools to construct your final answer.
-        # - You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-        # - DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-
-        # If the question does not seem related to the database, just return "I don't know" as the answer."""
-
-
-        ###Prompt 2
         self.system_prefix = """You are an agent designed to interact with a SQL database.
         Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
         Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
@@ -316,7 +293,6 @@ class CreateSqlAgentService:
     def create_document_retriever_tool(self, documents):
 
         texts = [doc.page_content for doc in documents]
-        # Create a custom retriever tool to look up proper nouns using FAISS and OpenAI embeddings.
         self.vector_store = FAISS.from_texts(texts, OpenAIEmbeddings())
 
         # Configure the retriever to return the top 5 most similar results.
@@ -413,20 +389,24 @@ class CreateSqlAgentService:
         })
 
     def create_agent(self):
+        # Check available tool
+        extra_tools = [self.retriever_tool]
+        if self.docs_retriever_tool is not None:
+            extra_tools.append(self.docs_retriever_tool)
+
+
         # Create the SQL agent using the configured LLM, database, prompt, and additional tools.
         self.agent = create_sql_agent(
             llm=self.llm,
             db=self.db,
             prompt=self.full_prompt,
-            extra_tools=[self.retriever_tool, self.docs_retriever_tool],
+            extra_tools=extra_tools,
             verbose=True,
             agent_type="openai-tools"
         )
     
-    
 
     def execute(self, question):
-        # Execute the agent with the given question and return the result.
         return self.agent({"input": question})
 
 

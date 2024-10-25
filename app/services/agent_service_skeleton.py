@@ -48,12 +48,7 @@ class CreateSqlAgentServiceSkeleton:
 
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients + fields)
                     print("Initiate Retriever Tool")
-                    
-                    docs_to_object = processing_structured_doc()
-                    
-
-                    CreateSqlAgentServiceSkeleton._instance.create_document_retriever_tool(docs_to_object)
-
+                   
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
                     print("Initiate Example Selector Tool")
                     
