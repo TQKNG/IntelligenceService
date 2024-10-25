@@ -15,6 +15,9 @@ async def save_file(file, file_path):
     with open(file_path, 'wb') as f:
         f.write(await file.read())
     
+async def delete_file(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 # Pre-process excel data

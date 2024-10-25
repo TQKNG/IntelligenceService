@@ -3,7 +3,7 @@ from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
 from app.services.real_time_voice_service import AI_Assistant
-from app.utils.processing_doc import processing_structured_doc,save_file, excel_to_csv
+from app.utils.processing_doc import processing_structured_doc,save_file, delete_file, excel_to_csv
 from typing import Dict, Any
 import base64
 
@@ -121,13 +121,16 @@ async def ask_sql_agent( question: str = Form(...),knowledgeBase: UploadFile = F
         # RAG doc
         sql_agent.create_document_retriever_tool(docs)
 
+        # Delete the doc
+        await delete_file(file_path)
+
         # Generate prompt
         sql_agent.create_full_prompt(question)
 
         # Execute the query
         sql_agent.create_agent()
 
-        # Delete the doc
+
     
     # Normal Text-to-SQL 
     else:
