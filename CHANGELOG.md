@@ -32,4 +32,5 @@
 ## [1.0.5] - 2024-09-20
 - Feature: Voice + performance testing + POC analysis testing 
 
-
+## [1.0.6] - 2024-10-25
+- Feature: Update UI for demo and RAG functionality

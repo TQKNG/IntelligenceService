@@ -3,11 +3,16 @@ import os
 from  app.services.agent_service import CreateSqlAgentService
 from  app.tools.agent_tool import query_as_list
 from dotenv import load_dotenv
+from app.utils.processing_doc import processing_structured_doc
 
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 elevenlab_api_key = os.getenv("ELEVENLAB_API_KEY")
 aai_api_key = os.getenv("AAI_API_KEY")
+azure_openai_key = os.getenv("AZURE_OPEN_API_KEY")
+azure_deployment = os.getenv("AZURE_DEPLOYMENT")
+azure_api_version = os.getenv("AZURE_API_VERSION")
+azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 
 class CreateSqlAgentServiceSkeleton:
     _instance = None
@@ -20,8 +25,11 @@ class CreateSqlAgentServiceSkeleton:
                 if CreateSqlAgentServiceSkeleton._instance is None:
                     CreateSqlAgentServiceSkeleton._instance = CreateSqlAgentService()
 
-                    CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key,'gpt-4o-mini')
+                    # CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key,'gpt-4o-mini')
+                    
+                    CreateSqlAgentServiceSkeleton._instance.config_llm(azure_openai_key,azure_openai_endpoint, azure_deployment, azure_api_version)
                     print("Connected to OpenAI")
+                    
 
                     CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
                     print("Connected to Database")
@@ -40,7 +48,7 @@ class CreateSqlAgentServiceSkeleton:
 
                     CreateSqlAgentServiceSkeleton._instance.create_custom_retriever_tool(clients + fields)
                     print("Initiate Retriever Tool")
-
+                   
                     CreateSqlAgentServiceSkeleton._instance.create_example_selector()
                     print("Initiate Example Selector Tool")
                     

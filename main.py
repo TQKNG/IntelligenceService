@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
+import os
+os.environ["LANGCHAIN_TRACING"] = "true"
 
 
 # Instantatiate FastAPI instance
