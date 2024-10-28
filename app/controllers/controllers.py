@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Form, File, HTTPException, APIRouter
+from fastapi import FastAPI, UploadFile,Depends, Form, File, HTTPException, APIRouter
 from fastapi.responses import StreamingResponse,FileResponse
 from app.services.agent_service import  CreateSqlAgentService, CreateAzureOpenAIService,CreateDataAnalysisAgentService
 from app.services.agent_service_skeleton import CreateSqlAgentServiceSkeleton
@@ -102,10 +102,13 @@ async def ask_sql_agent( question: str = Form(...),knowledgeBase: UploadFile = F
     if not question:
         raise HTTPException(status_code=400, detail="Question is empty")
     
+    # Instantiate or Get existing Agent instance
+    sql_agent = CreateSqlAgentServiceSkeleton.get_instance()
+
     # Knowledge base Text-to-SQL
     if knowledgeBase:
         # Location to save file
-        directory = "./uploads"
+        directory = "/temp"
         os.makedirs(directory, exist_ok=True)
         file_path = os.path.join(directory,knowledgeBase.filename)
 
@@ -114,9 +117,6 @@ async def ask_sql_agent( question: str = Form(...),knowledgeBase: UploadFile = F
 
         # Process file
         docs = await processing_structured_doc(file_path)
-
-        # Instantiate or Get existing Agent instance
-        sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
 
         # RAG doc
         sql_agent.create_document_retriever_tool(docs)
@@ -134,7 +134,6 @@ async def ask_sql_agent( question: str = Form(...),knowledgeBase: UploadFile = F
     
     # Normal Text-to-SQL 
     else:
-        sql_agent = CreateSqlAgentServiceSkeleton.get_instance() 
         sql_agent.create_full_prompt(question)
         sql_agent.create_agent()
 
