@@ -54,7 +54,7 @@ async def connect_agent_service():
     if sql_agent is None:
         raise HTTPException(status_code=400, detail="Agent service not connected.")
     
-    return {"message":"Success", "data":"The agent services has been connected."}
+    return {"message":"Success", "data":"The agent services has been successfully connect"}
 
 
 @router.post("/azureagent")
