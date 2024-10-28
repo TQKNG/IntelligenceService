@@ -34,3 +34,6 @@
 
 ## [1.0.6] - 2024-10-25
 - Feature: Update UI for demo and RAG functionality
+
+## [1.0.7] - 2024-10-27
+- Feature: Test rebuild v1.0.6
