@@ -284,7 +284,7 @@ def speech_to_text(payload: Dict[Any, Any]):
     audio_base64 = payload['audio']
     audio_bytes = base64.b64decode(audio_base64)
 
-    file_path = 'uploads/audio.mp3'
+    file_path = '/temp/audio.mp3'
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'wb') as audio_file:
         audio_file.write(audio_bytes)
