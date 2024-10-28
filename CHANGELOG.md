@@ -40,3 +40,7 @@
 
 ## [1.0.8] - 2024-10-28
 - Feature: Test rebuild v1.0.7
+
+## [1.0.9] - 2024-10-28
+- Fix: Bug voice directory on production
+
