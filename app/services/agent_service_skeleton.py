@@ -28,7 +28,7 @@ class CreateSqlAgentServiceSkeleton:
                     # CreateSqlAgentServiceSkeleton._instance.config_llm(openai_api_key,'gpt-4o-mini')
                     
                     CreateSqlAgentServiceSkeleton._instance.config_llm(azure_openai_key,azure_openai_endpoint, azure_deployment, azure_api_version)
-                    print("Connected to OpenAI")
+                    print("Connected to AzureOpenAI")
                     
 
                     CreateSqlAgentServiceSkeleton._instance.config_db(f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_SERVER')}/{os.getenv('DB_DATABASE')}?timeout=3")
