@@ -25,4 +25,4 @@ class MultiAgentService:
     def invoke(self, question):
         supervisor_agent = self.initialize_agents()
 
-        response = supervisor_agent.perform_task(question)
+        return supervisor_agent.invoke(question)

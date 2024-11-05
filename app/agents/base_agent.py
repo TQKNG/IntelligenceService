@@ -23,6 +23,11 @@ class BaseAgent(ABC):
             raise ValueError(f"Unsupported LLM provider: {llm_provider}")
         
     @abstractmethod
-    def perform_task(self, input_data):
+    def generate_prompt(self):
+        """Abstract method that must be implemented by subclasses"""
+        pass
+
+    @abstractmethod
+    def define_chain(self):
         """Abstract method that must be implemented by subclasses"""
         pass
