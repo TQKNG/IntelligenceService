@@ -44,3 +44,6 @@
 ## [1.0.9] - 2024-10-28
 - Fix: Bug voice directory on production
 
+## [1.0.10] - 2024-11-05
+- Update: Integrate Virbrix db
+
