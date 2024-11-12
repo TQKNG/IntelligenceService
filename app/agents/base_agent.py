@@ -7,7 +7,6 @@ load_dotenv()
 class BaseAgent(ABC):
     def __init__(self, name: str, config: dict):
         self.name = name
-        
         # Assuming `config` is a dictionary and keys should be accessed using `.get()`
         llm_config = config.get('llm', {})
         llm_provider = llm_config.get('provider')
@@ -23,11 +22,17 @@ class BaseAgent(ABC):
             raise ValueError(f"Unsupported LLM provider: {llm_provider}")
         
     @abstractmethod
+    def create_agent():
+        pass
+        
+    @abstractmethod
     def generate_prompt(self):
-        """Abstract method that must be implemented by subclasses"""
         pass
 
     @abstractmethod
     def define_chain(self):
-        """Abstract method that must be implemented by subclasses"""
+        pass
+
+    @abstractmethod
+    def invoke(self):
         pass

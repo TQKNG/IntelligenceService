@@ -285,10 +285,6 @@ async def analytics_service(payload: Dict[Any,Any]):
 
     multiagent_service = MultiAgentService()
 
-    multiagent_service.initialize_agents()
+    response = multiagent_service.invoke(payload['question'])
 
-    print("test multiagent", multiagent_service)
-    multiagent_service.construct_graph()
-    multiagent_service.draw_graph()
-
-    return {'messages':'Success'}
+    return {'messages':response}

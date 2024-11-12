@@ -39,17 +39,27 @@ class GraphBuilder:
         self.workflow.add_node(name, node)
 
     def add_edge(self,start, end):
-        self.workflow.add_edge(START,'Supervisor')
-        self.workflow.add_edge('Supervisor', END)
+        self.workflow.add_edge(start,end)
+     
 
-    def add_conditional_edge(self):
-        pass
+    def add_conditional_edge(self, start, func, conditional_map):
+        self.workflow.add_conditional_edges(start,func,conditional_map)
 
     def compile_graph(self):
         self.graph = self.workflow.compile()
 
-    def stream_graph(self):
-        pass
+    def stream_graph(self, question):
+         for s in self.graph.stream(
+            {
+                "messages":[
+                    HumanMessage(content=question)
+                ]
+            }
+        ):
+            if "__end__" not in s:
+                print(s)
+                print("----")
+
 
     def print_graph(self):
         data = self.graph.get_graph()
