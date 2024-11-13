@@ -25,9 +25,17 @@ class MultiAgentService:
             'max_tokens': 1000
         }
         )
+        agent_3 = AgentFactory.create_agent(
+            agent_type='API', name='Agent 3', config={
+            'llm': {'provider': 'OpenAI', 'model': 'gpt-4o-mini'},
+            'temperature': 0.7,
+            'max_tokens': 1000
+        }
+        )
 
         self.agents.append(agent_1)
         self.agents.append(agent_2)
+        self.agents.append(agent_3)
 
 
     # Handle response
@@ -45,25 +53,32 @@ class MultiAgentService:
 
         research_agent = self.agents[1].create_agent()
 
+        api_agent = self.agents[2].create_agent()
+
         research_node = functools.partial(self.agent_node, agent=research_agent, name='Researcher')
+
+        api_node = functools.partial(self.agent_node,agent='API')
         
         self.graph.add_node('Supervisor',self.agents[0].supervisor_agent)
 
         self.graph.add_node('Researcher', research_node)
 
+        self.graph.add_node('API',api_node)
+
 
         # Add Edges
-        self.graph.add_edge('Researcher',"Supervisor")
-
         self.graph.add_edge(START,'Supervisor')
 
-        # Add Conditions
-        conditional_map= {}
-        conditional_map['Researcher'] ='Researcher'
+        members = ["Researcher", 'API']
+        for member in members:
+            self.graph.add_edge(member,'Supervisor')
+
+        # Add condition
+        conditional_map ={k:k for k in members}
         conditional_map['FINISH'] = END
 
         self.graph.add_conditional_edge("Supervisor",lambda x: x['next'],conditional_map)
-
+        
         self.graph.compile_graph()
 
     def draw_graph(self):
@@ -77,7 +92,7 @@ class MultiAgentService:
 
         self.construct_graph()
 
-        # self. draw_graph()
+        self.draw_graph()
 
         # # Generate prompt-supervisor
         # self.agents[0].generate_prompt()
@@ -95,6 +110,6 @@ class MultiAgentService:
         # return self.agents[0].supervisor_agent(state)
 
         # return self.agents[0].invoke(question)
-        self.graph.stream_graph(question)
+        # self.graph.stream_graph(question)
        
         return {'messages': 'Done'}

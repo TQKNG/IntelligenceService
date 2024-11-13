@@ -1,5 +1,6 @@
 from .researcher_agent import ResearcherAgent
 from .supervisor_agent import SupervisorAgent
+from .api_agent import APIAgent
 
 class AgentFactory:
     @staticmethod
@@ -8,5 +9,7 @@ class AgentFactory:
             return SupervisorAgent(name,config)
         elif agent_type == 'Researcher':
             return ResearcherAgent(name,config)
+        elif agent_type == 'API':
+            return APIAgent(name,config)
         else:
             raise ValueError("Unknown Agent Type")

@@ -4,11 +4,11 @@ from app.prompts import supervisor_prompt
 from pydantic import BaseModel
 from typing import Literal
 
-members = ["Researcher"]
+members = ["Researcher", 'API']
 options = ["FINISH"] + members
 
 class routeResponse(BaseModel):
-    next: Literal["Researcher",'FINISH']
+    next: Literal["Researcher",'API']
 
 class SupervisorAgent(BaseAgent):
     def __init__(self, name, config: dict):
