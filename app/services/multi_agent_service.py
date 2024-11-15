@@ -57,7 +57,7 @@ class MultiAgentService:
 
         research_node = functools.partial(self.agent_node, agent=research_agent, name='Researcher')
 
-        api_node = functools.partial(self.agent_node,agent='API')
+        api_node = functools.partial(self.agent_node,agent=api_agent,name='API' )
         
         self.graph.add_node('Supervisor',self.agents[0].supervisor_agent)
 
@@ -92,24 +92,24 @@ class MultiAgentService:
 
         self.construct_graph()
 
-        self.draw_graph()
+        # self.draw_graph()
 
         # # Generate prompt-supervisor
-        # self.agents[0].generate_prompt()
+        self.agents[0].generate_prompt()
 
         # # Define a chain
-        # self.agents[0].define_chain()
+        self.agents[0].define_chain()
 
-        # state = {
-        #     "messages": [
-        #     {"role": "user", "content": question}
-        #     ]
-        # }
+        state = {
+            "messages": [
+            {"role": "user", "content": question}
+            ]
+        }
 
         # # Run the chain
         # return self.agents[0].supervisor_agent(state)
 
         # return self.agents[0].invoke(question)
-        # self.graph.stream_graph(question)
+        self.graph.stream_graph(question)
        
         return {'messages': 'Done'}
