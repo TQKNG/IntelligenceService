@@ -8,7 +8,7 @@ members = ["Researcher", 'API']
 options = ["FINISH"] + members
 
 class routeResponse(BaseModel):
-    next: Literal["Researcher",'API']
+    next: Literal["Researcher",'API',"FINISH"]
 
 class SupervisorAgent(BaseAgent):
     def __init__(self, name, config: dict):
