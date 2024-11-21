@@ -5,8 +5,9 @@ from langchain_openai import ChatOpenAI
 load_dotenv()
 
 class BaseAgent(ABC):
-    def __init__(self, name: str, config: dict):
+    def __init__(self, name: str,agent_type : str, config: dict):
         self.name = name
+        self.agent_type = agent_type
         # Assuming `config` is a dictionary and keys should be accessed using `.get()`
         llm_config = config.get('llm', {})
         llm_provider = llm_config.get('provider')

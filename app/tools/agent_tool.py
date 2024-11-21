@@ -1,8 +1,6 @@
-# Import abstract syntax grammar
-import ast
+import ast # Import abstract syntax grammar
 import re
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 from dotenv import load_dotenv
 from langchain_community.tools.tavily_search import TavilySearchResults

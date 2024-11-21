@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-
-
 def draw_img(data):
     try:
         img = data.draw_mermaid_png()

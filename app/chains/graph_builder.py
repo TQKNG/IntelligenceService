@@ -1,18 +1,15 @@
 from typing_extensions import TypedDict
-from typing import Annotated, Literal, Sequence
+from typing import Annotated, Sequence
 import operator
-from pydantic import BaseModel
+import functools
 # Utilities
 from app.utils.draw_img import draw_img
 
 # Langchain libraries
 from langchain_core.messages import BaseMessage ,HumanMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # Langgraph libraries
 from langgraph.graph import START, StateGraph, END
-from langgraph.prebuilt import create_react_agent
-
 
 class GraphBuilder:
     @staticmethod
@@ -25,22 +22,38 @@ class GraphBuilder:
         self.workflow = StateGraph(GraphBuilder.AgentState)
         self.graph = None
 
-    def create_edge(self):
-        pass
 
-    def create_conditional_edge(self):
-        pass
+    # Handle response
+    def agent_node(self, state, agent, name):
+        result = agent.invoke(state)
+        
+        # Supervisor with return the routeResponse
+        if name == 'Supervisor':
+            return result
+        
+        # Other agent with return the response message
+        return {
+            "messages": [HumanMessage(content=result["messages"][-1].content, name=name)]
+        }
 
-
-    def create_tool_node(self):
-        pass
+    def create_tool_node(self,agent, name):
+        return functools.partial(self.agent_node, agent=agent, name=name)
 
     def add_node(self, name,node):
         self.workflow.add_node(name, node)
 
     def add_edge(self,start, end):
-        self.workflow.add_edge(start,end)
-     
+        if start == 'start':
+            self.workflow.add_edge(START,end)
+        elif end == 'end':
+            self.workflow.add_edge(start, END)
+        else:
+            self.workflow.add_edge(start, end)
+
+    def create_conditional_edge(self,agents):
+        conditional_edges ={agent.name: agent.name for agent in agents if agent.name != "Supervisor"}
+        conditional_edges['FINISH'] = END
+        return conditional_edges
 
     def add_conditional_edge(self, start, func, conditional_map):
         self.workflow.add_conditional_edges(start,func,conditional_map)
