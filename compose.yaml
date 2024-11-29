@@ -19,8 +19,18 @@ services:
       DB_SERVER: azureapi.database.windows.net
       DB_DATABASE: azureaiassistant
       OPENAI_API_KEY: sk-proj-kf9yknjQHXCyqASw4jfMT3BlbkFJd3zhvmKFUC414OEaHyZM
+      AZURE_OPEN_API_KEY: 3594e9c4f9f54278a3a0e05f3602f9ad
+      AZURE_DEPLOYMENT: ai-gpt-4o
+      AZURE_OPENAI_ENDPOINT: https://azaiservice.openai.azure.com/openai/deployments/ai-gpt-4o/chat/completions?api-version=2023-03-15-preview
+      AZURE_API_VERSION: 2023-03-15-preview
+
       LANGCHAIN_TRACING_V2: true
       LANGCHAIN_API_KEY: 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
+      LANGCHAIN_ENDPOINT: https://api.smith.langchain.com
+      LANGCHAIN_PROJECT: Data_Analytic_Service
+      AAI_API_KEY: bec6ba13b3aa4de3a49c9701e09f9e03
+      ELEVENLAB_API_KEY: sk_88212ef90b9a925cfd7968f3e7bd8ba1ddee928611984721
+      TAVILY_API_KEY: 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
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
