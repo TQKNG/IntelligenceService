@@ -7,6 +7,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 import requests
 from langchain.tools import Tool
 
+
 load_dotenv()
 TAVILY_API_KEY = os.getenv("TAVLY_API_KEY")
 
@@ -45,5 +46,6 @@ external_api_tool = Tool(
     func=call_external_api,
     description="Fetches private api"
 )
+
 
 

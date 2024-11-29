@@ -11,7 +11,7 @@ class MultiAgentService:
     def initialize_agents(self):
         agent_1 = AgentFactory.create_agent(agent_type='Supervisor', name='Supervisor', config={
             'llm': {'provider': 'OpenAI', 'model': 'gpt-4o-mini'},
-            'temperature': 0.7,
+            'temperature': 1,
             'max_tokens': 1000
         })
 
@@ -23,10 +23,9 @@ class MultiAgentService:
         }
         )
         agent_3 = AgentFactory.create_agent(
-            agent_type='API', name='API', config={
+            agent_type='SQLAgent', name='SQLAgent', config={
             'llm': {'provider': 'OpenAI', 'model': 'gpt-4o-mini'},
-            'temperature': 0.7,
-            'max_tokens': 1000
+            'temperature': 1,            
         }
         )
 
@@ -44,21 +43,21 @@ class MultiAgentService:
         
         research_agent = self.agents[1].create_agent()
 
-        api_agent = self.agents[2].create_agent()
+        sql_agent = self.agents[2].create_agent()
 
         # Create agent node
         supervisor_node = self.graph.create_tool_node(supervisor_agent,name='Supervisor')
 
         research_node = self.graph.create_tool_node(research_agent, name = 'Researcher')
 
-        api_node = self.graph.create_tool_node(api_agent, name='API')
+        sql_node = self.graph.create_tool_node(sql_agent, name='SQLAgent')
 
         # Add node to graph
         self.graph.add_node('Supervisor',supervisor_node)
 
         self.graph.add_node('Researcher', research_node)
 
-        self.graph.add_node('API',api_node)
+        self.graph.add_node('SQLAgent',sql_node)
 
 
         # Add Edges
